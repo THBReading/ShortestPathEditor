@@ -47,7 +47,7 @@ function SidebarObject(editor) {
 
 	var objectOrderRow = new UIRow();
 	var objectOrder = new UIInteger().setWidth('50px').onChange(function () {
-		editor.execute(new SetValueCommand(editor, editor.state.selectedNode, "order" ,objectOrder.getValue()));
+		editor.execute(new SetValueCommand(editor, editor.state.selectedNode, "order", objectOrder.getValue()));
 	});
 
 	objectOrderRow.add(new UIText('Order').setWidth('90px'));
@@ -98,6 +98,12 @@ function SidebarObject(editor) {
 
 	container.add(objectUserDataRow);
 
+	// var extraInfo = new UIPanel();
+	// extraInfo.setBorderTop('0');
+	// extraInfo.setPaddingTop('20px');
+	// extraInfo.setDisplay('none');
+
+	// container.add(extraInfo)
 
 	//
 
@@ -122,9 +128,9 @@ function SidebarObject(editor) {
 
 	signals.nodeDataChanged.add(
 		function (node) {
-			if(!editor.state.selectedNode){return;}
+			if (!editor.state.selectedNode) { return; }
 			if (node.id !== editor.state.selectedNode.id) { return; }
-			updateUI(node);
+			updateUI(editor.state.selectedNodes);
 		}
 	)
 
@@ -216,13 +222,71 @@ function SidebarObject(editor) {
 
 	function updateUI(object) {
 
-		console.log(editor.state.selectedNodes);
-		objectUUID.setValue(object.id);
-		objectTitle.setValue(object.title);
-		objectOrder.setValue(object.order);
-		objectPositionX.setValue(object.x);
-		objectPositionY.setValue(object.y);
+		if (object.length > 1) {
+
+			let result = {};
+
+			let array = Object.values(object)
+
+			for (let i = 0; i < array.length - 1; i++) {
+
+				for (let prop in array[i]) {
+					if (result[prop] !== false) {
+						result[prop] = array[i][prop] === array[i + 1][prop];
+					}
+				}
+
+			}
+
+			object = object[0];
+			objectUUID.setValue(result.id ? object.id : null);
+			objectTitle.setValue(result.title ? object.title : null);
+			objectOrder.setValue(result.order ? object.order : null);
+			objectPositionX.setValue(result.x ? object.x : null);
+			objectPositionY.setValue(result.y ? object.y : null);
+
+		} else {
+			object = object[0];
+			objectUUID.setValue(object.id);
+			objectTitle.setValue(object.title);
+			objectOrder.setValue(object.order);
+			objectPositionX.setValue(object.x);
+			objectPositionY.setValue(object.y);
+		}
+
+
+
+
+
+		//addExtraInfo(object);
+
 	}
+
+	// function addExtraInfo(object) {
+	// 	///////////////// TRIAL ////////////////////
+	// 	// let container = new UIPanel();
+	// 	// container.setBorderTop('0');
+	// 	// container.setPaddingTop('20px');
+	// 	// container.setDisplay('none');
+
+	// 	let outputArray = [];
+	// 	extraInfo.clear();
+
+	// 	Object.keys(object).forEach(function (attr) {
+	// 		let trialRow = new UIRow();
+	// 		let trailX = new UIInteger().setWidth('50px').onChange(function () {
+
+	// 		});
+
+	// 		trialRow.add(new UIText("Position").setWidth('90px'));
+	// 		trialRow.add(trailX);
+	// 		extraInfo.add(trialRow);
+	// 	});
+
+
+	// 	// return extraInfo;
+	// }
+
 
 	return container;
 

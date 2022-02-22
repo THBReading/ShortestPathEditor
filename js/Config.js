@@ -7,7 +7,7 @@ function Config() {
 
 		'autosave': true,
 
-		'project/title': '',
+		'project/title': 'Untitled',
 		'project/editable': false,
 
 		'settings/history': false,

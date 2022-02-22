@@ -355,6 +355,15 @@ select {
 		padding-right: 0;
 		text-align: right;
 	}
+/* TODO:need to be fixed to sit in centre */
+	#menubar .menu.center { 
+		width: 70%;
+ 		margin: 0 auto;
+		/* float: center; */
+		cursor: auto;
+		/* padding-right: 0; */
+		text-align: center;
+	}
 
 		#menubar .menu .title {
 			display: inline-block;

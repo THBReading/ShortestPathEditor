@@ -491,9 +491,10 @@ export class GraphEditor {
         thisGraph.state.selectedNode = nodeData;
         thisGraph.state.selectedNodes.push(nodeData);
         this.editor.state.selectedNode = nodeData;
+        this.editor.state.selectedNodes.push(nodeData);
         //thisGraph.updateSidebar();
         thisGraph.shortestPath();
-        thisGraph.editor.signals.objectSelected.dispatch(nodeData);
+        thisGraph.editor.signals.objectSelected.dispatch(this.editor.state.selectedNodes);
     }
 
     selectNodes(selection) {
@@ -527,6 +528,8 @@ export class GraphEditor {
         let thisGraph = this;
         d3node.classed(thisGraph.consts.selectedClass, false);
         thisGraph.state.selectedNode = null;
+        this.editor.state.selectedNode = null;
+        this.editor.state.selectedNodes.splice(thisGraph.state.selectedNodes.indexOf(d3node), 1);
         thisGraph.state.selectedNodes.splice(thisGraph.state.selectedNodes.indexOf(d3node), 1);
         // thisGraph.updateSidebar();
         thisGraph.shortestPath();
@@ -554,6 +557,11 @@ export class GraphEditor {
         }).classed(thisGraph.consts.selectedClass, false);
         thisGraph.state.selectedNode = null;
         thisGraph.state.selectedNodes = [];
+
+        this.editor.state.selectedNode = null;
+        this.editor.state.selectedNodes = [];
+
+
         // thisGraph.updateSidebar();
     }
     getSelected() {
