@@ -1,0 +1,14 @@
+{
+  "name": "Layout Editor",
+  "short_name": "Layout Editor",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "./images/icon.png",
+      "type": "image/png",
+      "sizes": "144x144"
+    }
+  ]
+}

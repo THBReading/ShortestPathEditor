@@ -1,0 +1,154 @@
+/* body{
+    margin: 0;
+    padding: 0;
+    overflow:hidden;
+} */
+
+p{
+     text-align: center;
+     overflow: overlay;
+     position: relative;
+}
+
+body{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* background-color: rgb(255, 255, 255); */
+    font: 100% sans-serif;
+}
+
+#toolbox{
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    margin-bottom: 0.5em;
+    margin-left: 1em;
+    border: 2px solid #EEEEEE;
+    border-radius: 5px;
+    padding: 1em;
+    z-index: 5;
+}
+
+#toolbox input{
+    width: 30px;
+    opacity: 0.4;
+}
+#toolbox input:hover{
+    opacity: 1;
+    cursor: pointer;
+}
+
+#hidden-file-upload{
+    display: none;
+}
+
+/* #download-input{
+    margin: 0 0.5em;
+} */
+
+.conceptG text{
+    pointer-events: none;
+}
+
+marker{
+    fill: rgb(82, 82, 82);
+}
+
+g.conceptG circle{
+    cursor: move;
+    fill: coral;
+    stroke: rgb(82, 82, 82);
+    stroke-width: 1.5px;
+}
+
+g.conceptG.visited circle{
+    stroke: greenyellow;
+    stroke-width: 4px;
+}
+
+g.conceptG.start-node circle{
+    stroke: red;
+}
+
+g.conceptG.end-node circle{
+    stroke: blue;
+}
+
+g.conceptG:hover circle{
+    stroke-width: 5;
+    stroke: rgb(82, 82, 82);
+}
+
+g.conceptG.selected circle{
+    stroke-width: 4;
+    stroke: rgb(82, 82, 82);
+}
+g.conceptG.selected:hover circle{
+    stroke-width: 5;
+    stroke: rgb(82, 82, 82);
+}
+
+path.link {
+    fill: none;
+    stroke: rgb(82, 82, 82);
+    stroke-width: 6px;
+    cursor: default;
+}
+
+path.dragline {
+    fill: none;
+    stroke: rgb(82, 82, 82);
+    stroke-width: 6px;
+    cursor: default;
+}
+
+path.link.visited{
+    stroke: greenyellow;
+}
+
+path.link:hover{
+    stroke: rgb(94, 196, 204);
+}
+
+g.connect-node circle{
+    fill: #BEFFFF;
+}
+
+path.dragline.hidden{
+    stroke-width: 0;
+}
+
+path.link.selected {
+    stroke: rgb(229, 172, 247);
+}
+
+.id-text{
+    font: 100% sans-serif;
+    fill: black;
+}
+
+text.weight{
+    pointer-events: none;
+    text-anchor: middle;
+    font: 100% sans-serif;
+    fill: white;
+}
+
+rect.selectionbox{
+    stroke: white;
+    stroke-width: 2;
+    stroke-dasharray: 6;
+    fill-opacity: 0%;
+}
+rect.selectionbox.hidden{
+    stroke-opacity: 0%;
+}
+
+.grid{
+    stroke: rgb(39, 39, 39);
+    stroke-width: 2;
+}
