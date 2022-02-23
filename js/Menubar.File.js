@@ -58,16 +58,16 @@ function MenubarFile(editor) {
 
 		var output = editor.toJSON();
 
-		// try {
+		try {
 
-		// 	output = JSON.stringify( output, null, '\t' );
-		// 	output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
+			output = JSON.stringify( output, null, '\t' );
+			output = output.replace( /[\n\t]+([\d\.e\-\[\]]+)/g, '$1' );
 
-		// } catch ( e ) {
+		} catch ( e ) {
 
-		// 	output = JSON.stringify( output );
+			output = JSON.stringify( output );
 
-		// }
+		}
 
 		saveString( output, 'gte-download.json' );
 		form.reset();
