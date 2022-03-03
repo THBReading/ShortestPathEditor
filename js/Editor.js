@@ -135,6 +135,7 @@ Editor.prototype = {
 
 	},
 	clear: function () {
+		this.config.setKey('project/title', 'untitled')
 		this.graph.resetGraph();
 		this.history.clear();
 		this.signals.graphDataChanged.dispatch();

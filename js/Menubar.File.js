@@ -69,7 +69,10 @@ function MenubarFile(editor) {
 
 		}
 
-		saveString( output, 'gte-download.json' );
+		let filename = editor.config.getKey('project/title')
+		
+
+		saveString( output, (filename ===""?"untitled":filename) + '.json' );
 		form.reset();
 
 	});

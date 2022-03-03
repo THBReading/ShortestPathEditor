@@ -190,7 +190,7 @@ export class GraphEditor {
             })
             .on("start", function (event) {
                 if (!event.sourceEvent.shiftKey)
-                    d3.select('body').style("cursor", "move");
+                    d3.select('body').style("cursor", "grab");
             })
             .on("end", function () {
                 d3.select('body').style("cursor", "auto");
@@ -762,10 +762,16 @@ export class GraphEditor {
             .attr("x", function (d) { return ((d.source.x + d.target.x) / 2); })
             .attr("y", function (d) { return ((d.source.y + d.target.y) / 2); })
             .text(function (d) {
+                let option = thisGraph.editor.config.getKey('settings/edgetext')
+                switch (option){
+                case "weight":
                 return Math.sqrt(
                     Math.pow(Math.abs(d.source.x - d.target.x), 2) +
                     Math.pow(Math.abs(d.source.y - d.target.y), 2)
                 ).toFixed(0) + "cm"
+                case "": return;
+                default: return d[option];
+                }
             })
             .attr("transform", function (d) {
                 let xMid = ((d.source.x + d.target.x) / 2),
@@ -785,10 +791,11 @@ export class GraphEditor {
             .attr("x", function (d) { return ((d.source.x + d.target.x) / 2); })
             .attr("y", function (d) { return ((d.source.y + d.target.y) / 2); })
             .text(function (d) {
-                return Math.sqrt(
-                    Math.pow(Math.abs(d.source.x - d.target.x), 2) +
-                    Math.pow(Math.abs(d.source.y - d.target.y), 2)
-                ).toFixed(0) + "cm"
+                return d[thisGraph.editor.config.getKey('settings/edgetext')]
+                // return Math.sqrt(
+                //     Math.pow(Math.abs(d.source.x - d.target.x), 2) +
+                //     Math.pow(Math.abs(d.source.y - d.target.y), 2)
+                // ).toFixed(0) + "cm"
             })
             .attr("transform", function (d) {
                 let xMid = ((d.source.x + d.target.x) / 2),

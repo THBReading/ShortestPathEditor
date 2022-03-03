@@ -35,7 +35,14 @@ function SidebarObject(editor) {
 
 	var objectTitleRow = new UIRow();
 	var objectTitle = new UIInput().setWidth('150px').setFontSize('12px').onChange(function () {
-		editor.execute(new SetValueCommand(editor, editor.state.selectedNode, { title: objectTitle.getValue() }));
+		editor.execute(
+			new SetValueCommand(
+				editor,
+				editor.state.selectedNode,
+				"title",
+				objectTitle.getValue()
+			)
+		);
 	});
 
 	objectTitleRow.add(new UIText('Title').setWidth('90px'));
