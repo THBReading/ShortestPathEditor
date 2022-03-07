@@ -1,16 +1,10 @@
-/* body{
-    margin: 0;
-    padding: 0;
-    overflow:hidden;
-} */
-
-p{
-     text-align: center;
-     overflow: overlay;
-     position: relative;
+p {
+    text-align: center;
+    overflow: overlay;
+    position: relative;
 }
 
-body{
+body {
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -21,7 +15,7 @@ body{
     font: 100% sans-serif;
 }
 
-#toolbox{
+#toolbox {
     position: absolute;
     bottom: 0;
     left: 0;
@@ -33,61 +27,59 @@ body{
     z-index: 5;
 }
 
-#toolbox input{
+#toolbox input {
     width: 30px;
     opacity: 0.4;
 }
-#toolbox input:hover{
+
+#toolbox input:hover {
     opacity: 1;
     cursor: pointer;
 }
 
-#hidden-file-upload{
+#hidden-file-upload {
     display: none;
 }
 
-/* #download-input{
-    margin: 0 0.5em;
-} */
-
-.conceptG text{
+.conceptG text {
     pointer-events: none;
 }
 
-marker{
+marker {
     fill: rgb(82, 82, 82);
 }
 
-g.conceptG circle{
+g.conceptG circle {
     cursor: move;
     fill: coral;
     stroke: rgb(82, 82, 82);
     stroke-width: 1.5px;
 }
 
-g.conceptG.visited circle{
+g.conceptG.visited circle {
     stroke: greenyellow;
     stroke-width: 4px;
 }
 
-g.conceptG.start-node circle{
+g.conceptG.start-node circle {
     stroke: red;
 }
 
-g.conceptG.end-node circle{
+g.conceptG.end-node circle {
     stroke: blue;
 }
 
-g.conceptG:hover circle{
+g.conceptG:hover circle {
     stroke-width: 5;
     stroke: rgb(82, 82, 82);
 }
 
-g.conceptG.selected circle{
+g.conceptG.selected circle {
     stroke-width: 4;
     stroke: rgb(82, 82, 82);
 }
-g.conceptG.selected:hover circle{
+
+g.conceptG.selected:hover circle {
     stroke-width: 5;
     stroke: rgb(82, 82, 82);
 }
@@ -106,19 +98,19 @@ path.dragline {
     cursor: default;
 }
 
-path.link.visited{
+path.link.visited {
     stroke: greenyellow;
 }
 
-path.link:hover{
+path.link:hover {
     stroke: rgb(94, 196, 204);
 }
 
-g.connect-node circle{
+g.connect-node circle {
     fill: #BEFFFF;
 }
 
-path.dragline.hidden{
+path.dragline.hidden {
     stroke-width: 0;
 }
 
@@ -126,29 +118,100 @@ path.link.selected {
     stroke: rgb(229, 172, 247);
 }
 
-.id-text{
+.id-text {
     font: 100% sans-serif;
     fill: black;
 }
 
-text.weight{
+.path-label,
+.node-label {
     pointer-events: none;
     text-anchor: middle;
     font: 100% sans-serif;
-    fill: white;
 }
 
-rect.selectionbox{
+.path-label {
+    fill: coral;
+    /* text-shadow: 2px 2px 5px red; */
+}
+
+.node-label {
+    fill: #000000;
+}
+
+rect.selectionbox {
     stroke: white;
     stroke-width: 2;
     stroke-dasharray: 6;
     fill-opacity: 0%;
 }
-rect.selectionbox.hidden{
+
+rect.selectionbox.hidden {
     stroke-opacity: 0%;
 }
 
-.grid{
+.grid {
     stroke: rgb(39, 39, 39);
     stroke-width: 2;
+}
+
+@media ( prefers-color-scheme: dark) {
+    #toolbox {
+        border: 2px solid #EEEEEE;
+    }
+    marker {
+        fill: rgb(82, 82, 82);
+    }
+    g.conceptG circle {
+        fill: coral;
+        stroke: rgb(82, 82, 82);
+    }
+    g.conceptG.visited circle {
+        stroke: greenyellow;
+    }
+    g.conceptG.start-node circle {
+        stroke: red;
+    }
+    g.conceptG.end-node circle {
+        stroke: blue;
+    }
+    g.conceptG:hover circle {
+        stroke: rgb(82, 82, 82);
+    }
+    g.conceptG.selected circle {
+        stroke: rgb(82, 82, 82);
+    }
+    g.conceptG.selected:hover circle {
+        stroke: rgb(82, 82, 82);
+    }
+    path.link {
+        stroke: rgb(82, 82, 82);
+    }
+    path.dragline {
+        stroke: rgb(82, 82, 82);
+    }
+    path.link.visited {
+        stroke: greenyellow;
+    }
+    path.link:hover {
+        stroke: rgb(94, 196, 204);
+    }
+    g.connect-node circle {
+        fill: #BEFFFF;
+    }
+    path.link.selected {
+        stroke: rgb(229, 172, 247);
+    }
+    .path-label {
+        fill: white;
+    }
+    .node-label {
+        fill: white;
+    }
+    rect.selectionbox {
+        stroke: white;
+    }
+    .grid {
+        stroke: rgb(39, 39, 39);
+    }
 }

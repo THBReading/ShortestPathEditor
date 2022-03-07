@@ -1,59 +1,60 @@
-
 import { UIPanel, UIBreak, UIText, UIListbox } from './libs/ui.js';
 // import { UIBoolean, UIOutliner } from './libs/ui.three.js';
 
 function SidebarSettingsHistory(editor) {
 
-	// var strings = editor.strings;
+    // var strings = editor.strings;
 
-	var signals = editor.signals;
+    var signals = editor.signals;
 
-	// var config = editor.config;
+    // var config = editor.config;
 
-	var history = editor.history;
+    var history = editor.history;
 
-	var container = new UIPanel();
+    var container = new UIPanel();
 
-	container.add(new UIText('HISTORY'));
-
-
-	container.add(new UIBreak(), new UIBreak());
-
-	var history = new UIListbox().onClick(function () {
-		editor.history.goToState(parseInt(history.getValue()));
-	});
-
-	container.add(history);
+    container.add(new UIText('HISTORY'));
 
 
-	function refreshHistoryBrowserUI() {
-		let items = [];
+    container.add(new UIBreak(), new UIBreak());
 
-		for (var i = 0, l = editor.history.undos.length; i < l; i++) {
+    var history = new UIListbox().onClick(function() {
+        editor.history.goToState(parseInt(history.getValue()));
+    });
 
-			items.push(editor.history.undos[i]);
+    container.add(history.setHeight("100px"));
 
-		}
 
-		for (var i = editor.history.redos.length - 1; i >= 0; i--) {
+    function refreshHistoryBrowserUI() {
+        let items = [];
 
-			items.push(editor.history.redos[i]);
+        for (var i = 0, l = editor.history.undos.length; i < l; i++) {
 
-		}
+            items.push(editor.history.undos[i]);
 
-		history.setItems(items);
+        }
 
-	}
+        for (var i = editor.history.redos.length - 1; i >= 0; i--) {
 
-	editor.signals.historyChanged.add(refreshHistoryBrowserUI);
+            items.push(editor.history.redos[i]);
 
-	editor.signals.historyChanged.add(function (cmd) {
+        }
 
-		history.selectIndex(cmd !== undefined ? editor.history.undos.length - 1 : null);
+        history.setItems(items);
 
-	});
+        editor.history.redos.length < 1 ? history.dom.scrollTop = history.dom.scrollHeight : null;
 
-	return container;
+    }
+
+    editor.signals.historyChanged.add(refreshHistoryBrowserUI);
+
+    editor.signals.historyChanged.add(function(cmd) {
+
+        history.selectIndex(cmd !== undefined ? editor.history.undos.length - 1 : null);
+
+    });
+
+    return container;
 
 
 

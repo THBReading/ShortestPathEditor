@@ -6,14 +6,18 @@ function SidebarSettingsSnapping(editor) {
 	var signals = editor.signals;
 
 	var container = new UIPanel();
-	container.add(new UIText('SNAPPING GRID'));
+
+	var titleRow = new UIRow();
+	
 
 	var persistent = new UICheckbox(editor.state.grid.active);
-	persistent.setPosition('absolute').setRight('8px');
+	persistent.setPosition('absolute').setRight("8px");
 	persistent.onChange(function () { 
 		editor.state.grid.active = this.getValue();
 	});
-	container.add(persistent);
+
+	titleRow.add(new UIText('SNAPPING GRID'),persistent);
+	container.add(titleRow);
 	container.add(new UIBreak(), new UIBreak());
 
 	container.setBorderTop('0');
@@ -31,10 +35,6 @@ function SidebarSettingsSnapping(editor) {
 		editor.signals.snapGridChanged.dispatch();
 	});
 	var centreOn = new UIButton("New").setMarginLeft('7px').onClick(function () {
-
-		// objectUUID.setValue( THREE.MathUtils.generateUUID() );
-
-		// editor.execute( new SetUuidCommand( editor, editor.selected, objectUUID.getValue() ) );
 
 	});
 

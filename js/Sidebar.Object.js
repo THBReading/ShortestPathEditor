@@ -141,63 +141,38 @@ function SidebarObject(editor) {
 		}
 	)
 
-	// function updateRows( object ) {
+	function updateRows( object ) {
 
-	// 	var properties = {
-	// 		'fov': objectFovRow,
-	// 		'left': objectLeftRow,
-	// 		'right': objectRightRow,
-	// 		'top': objectTopRow,
-	// 		'bottom': objectBottomRow,
-	// 		'near': objectNearRow,
-	// 		'far': objectFarRow,
-	// 		'intensity': objectIntensityRow,
-	// 		'color': objectColorRow,
-	// 		'groundColor': objectGroundColorRow,
-	// 		'distance': objectDistanceRow,
-	// 		'angle': objectAngleRow,
-	// 		'penumbra': objectPenumbraRow,
-	// 		'decay': objectDecayRow,
-	// 		'castShadow': objectShadowRow,
-	// 		'receiveShadow': objectReceiveShadow,
-	// 		'shadow': [ objectShadowBiasRow, objectShadowNormalBiasRow, objectShadowRadiusRow ]
-	// 	};
+		var properties = {
+			'id': objectUUIDRow,
+			'order': objectOrderRow,
+			'x': objectPositionRow,
+			'y': objectPositionRow,
+			'title': objectTitleRow,
+			'extra': objectUserDataRow,
+		};
 
-	// 	for ( var property in properties ) {
+		for ( var property in properties ) {
 
-	// 		var uiElement = properties[ property ];
+			var uiElement = properties[ property ];
 
-	// 		if ( Array.isArray( uiElement ) === true ) {
+			if ( Array.isArray( uiElement ) === true ) {
 
-	// 			for ( var i = 0; i < uiElement.length; i ++ ) {
+				for ( var i = 0; i < uiElement.length; i ++ ) {
 
-	// 				uiElement[ i ].setDisplay( object[ property ] !== undefined ? '' : 'none' );
+					uiElement[ i ].setDisplay( object[ property ] !== undefined ? '' : 'none' );
 
-	// 			}
+				}
 
-	// 		} else {
+			} else {
 
-	// 			uiElement.setDisplay( object[ property ] !== undefined ? '' : 'none' );
+				uiElement.setDisplay( object[ property ] !== undefined ? '' : 'none' );
 
-	// 		}
+			}
 
-	// 	}
+		}
 
-	// 	//
-
-	// 	if ( object.isLight ) {
-
-	// 		objectReceiveShadow.setDisplay( 'none' );
-
-	// 	}
-
-	// 	if ( object.isAmbientLight || object.isHemisphereLight ) {
-
-	// 		objectShadowRow.setDisplay( 'none' );
-
-	// 	}
-
-	// }
+	}
 
 	// events
 
@@ -229,39 +204,43 @@ function SidebarObject(editor) {
 
 	function updateUI(object) {
 
-		if (object.length > 1) {
+			if (object.length > 1) {
 
-			let result = {};
+				let result = {};
 
-			let array = Object.values(object)
+				let array = Object.values(object)
 
-			for (let i = 0; i < array.length - 1; i++) {
+				for (let i = 0; i < array.length - 1; i++) {
 
-				for (let prop in array[i]) {
-					if (result[prop] !== false) {
-						result[prop] = array[i][prop] === array[i + 1][prop];
+					for (let prop in array[i]) {
+						if (result[prop] !== false) {
+							result[prop] = array[i][prop] === array[i + 1][prop];
+						}
 					}
+
 				}
 
+				object = object[0];
+				objectUUID.setValue(result.id ? object.id : null);
+				objectTitle.setValue(result.title ? object.title : null);
+				objectOrder.setValue(result.order ? object.order : null);
+				objectPositionX.setValue(result.x ? object.x : null);
+				objectPositionY.setValue(result.y ? object.y : null);
+				updateRows(object);
+
+			} else if (object.length === 1) {
+				object = object[0];
+				objectUUID.setValue(object.id);
+				objectTitle.setValue(object.title);
+				objectOrder.setValue(object.order);
+				objectPositionX.setValue(object.x);
+				objectPositionY.setValue(object.y);
+				updateRows(object);
+			} else {
+				updateRows({});
 			}
 
-			object = object[0];
-			objectUUID.setValue(result.id ? object.id : null);
-			objectTitle.setValue(result.title ? object.title : null);
-			objectOrder.setValue(result.order ? object.order : null);
-			objectPositionX.setValue(result.x ? object.x : null);
-			objectPositionY.setValue(result.y ? object.y : null);
-
-		} else {
-			object = object[0];
-			objectUUID.setValue(object.id);
-			objectTitle.setValue(object.title);
-			objectOrder.setValue(object.order);
-			objectPositionX.setValue(object.x);
-			objectPositionY.setValue(object.y);
-		}
-
-
+		
 
 
 
