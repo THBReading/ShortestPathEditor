@@ -1,71 +1,74 @@
 function Config() {
 
-	var name = 'graph-theory-editor';
+    var name = 'graph-theory-editor';
 
-	var storage = {
-		'language': 'en',
+    var storage = {
+        'language': 'en',
 
-		'autosave': true,
+        'autosave': true,
 
-		'project/title': 'Untitled',
-		'project/editable': false,
+        'project/title': 'Untitled',
+        'project/editable': false,
 
-		'settings/history': false,
+        'settings/history': false,
 
-		'settings/nodetext': 'title',
+        'settings/nodetext': 'title',
+        'settings/edgetext': 'weight',
+        'settings/scale': 1,
 
-		'settings/shortcuts/translate': 'w',
-		'settings/shortcuts/rotate': 'e',
-		'settings/shortcuts/scale': 'r',
-		'settings/shortcuts/undo': 'z',
-		'settings/shortcuts/focus': 'f'
-	};
 
-	if ( window.localStorage[ name ] === undefined ) {
+        'settings/shortcuts/translate': 'w',
+        'settings/shortcuts/rotate': 'e',
+        'settings/shortcuts/scale': 'r',
+        'settings/shortcuts/undo': 'z',
+        'settings/shortcuts/focus': 'f'
+    };
 
-		window.localStorage[ name ] = JSON.stringify( storage );
+    if (window.localStorage[name] === undefined) {
 
-	} else {
+        window.localStorage[name] = JSON.stringify(storage);
 
-		var data = JSON.parse( window.localStorage[ name ] );
+    } else {
 
-		for ( var key in data ) {
+        var data = JSON.parse(window.localStorage[name]);
 
-			storage[ key ] = data[ key ];
+        for (var key in data) {
 
-		}
+            storage[key] = data[key];
 
-	}
+        }
 
-	return {
+    }
 
-		getKey: function ( key ) {
+    return {
 
-			return storage[ key ];
+        getKey: function(key) {
 
-		},
+            return storage[key];
 
-		setKey: function () { // key, value, key, value ...
+        },
 
-			for ( var i = 0, l = arguments.length; i < l; i += 2 ) {
+        setKey: function() { // key, value, key, value ...
 
-				storage[ arguments[ i ] ] = arguments[ i + 1 ];
+            for (var i = 0, l = arguments.length; i < l; i += 2) {
 
-			}
+                storage[arguments[i]] = arguments[i + 1];
 
-			window.localStorage[ name ] = JSON.stringify( storage );
+            }
 
-			console.log( '[' + /\d\d\:\d\d\:\d\d/.exec( new Date() )[ 0 ] + ']', 'Saved config to LocalStorage.' );
+            window.localStorage[name] = JSON.stringify(storage);
 
-		},
+            console.log('[' + /\d\d\:\d\d\:\d\d/.exec(new Date())[0] + ']', 'Saved config to LocalStorage.');
 
-		clear: function () {
+        },
 
-			delete window.localStorage[ name ];
+        clear: function() {
 
-		}
+            delete window.localStorage[name];
 
-	};
+        }
+
+    };
 
 }
 
