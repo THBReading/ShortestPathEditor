@@ -6,8 +6,13 @@
   "display": "standalone",
   "icons": [
     {
-      "src": "./images/icon.png",
-      "type": "image/png",
+      "src": "./icons/icon.svg",
+      "type": "image/svg",
+      "sizes": "144x144"
+    },
+    {
+      "src": "./icons/iconwhite.svg",
+      "type": "image/svg",
       "sizes": "144x144"
     }
   ]

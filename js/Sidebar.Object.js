@@ -141,7 +141,7 @@ function SidebarObject(editor) {
 		}
 	)
 
-	function updateRows( object ) {
+	function updateRows(object) {
 
 		var properties = {
 			'id': objectUUIDRow,
@@ -152,21 +152,23 @@ function SidebarObject(editor) {
 			'extra': objectUserDataRow,
 		};
 
-		for ( var property in properties ) {
+		if (object === undefined) { return; }
 
-			var uiElement = properties[ property ];
+		for (var property in properties) {
 
-			if ( Array.isArray( uiElement ) === true ) {
+			var uiElement = properties[property];
 
-				for ( var i = 0; i < uiElement.length; i ++ ) {
+			if (Array.isArray(uiElement) === true) {
 
-					uiElement[ i ].setDisplay( object[ property ] !== undefined ? '' : 'none' );
+				for (var i = 0; i < uiElement.length; i++) {
+
+					uiElement[i].setDisplay(object[property] !== undefined ? '' : 'none');
 
 				}
 
 			} else {
 
-				uiElement.setDisplay( object[ property ] !== undefined ? '' : 'none' );
+				uiElement.setDisplay(object[property] !== undefined ? '' : 'none');
 
 			}
 
@@ -204,6 +206,8 @@ function SidebarObject(editor) {
 
 	function updateUI(object) {
 
+		try {
+
 			if (object.length > 1) {
 
 				let result = {};
@@ -239,10 +243,10 @@ function SidebarObject(editor) {
 			} else {
 				updateRows({});
 			}
-
-		
-
-
+		} catch (err) {
+			console.log(err);
+			updateRows({});
+		}
 
 		//addExtraInfo(object);
 

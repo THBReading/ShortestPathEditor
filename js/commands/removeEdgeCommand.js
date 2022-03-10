@@ -14,7 +14,7 @@ class RemoveEdgeCommand extends Command {
         this.type = 'RemoveEdgeCommand';
 
         this.edge = edge;
-        if (node !== undefined) {
+        if (edge !== undefined) {
             this.name = `Remove Edge: ${undefined}`;
         }
 

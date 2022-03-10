@@ -54,6 +54,7 @@ function Editor() {
         selectedNode: null,
         selectedNodes: [],
         selectedEdges: [],
+        selected:[],
         selectedEdge: null,
         mouseDownNode: null,
         mouseEnterNode: null,

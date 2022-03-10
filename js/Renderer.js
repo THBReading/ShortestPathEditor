@@ -1,12 +1,8 @@
-// import * as initUI from "./init_ui.js";
-// import { width, height, graph, svg } from "./main.js";
-// import { makeUL } from "./stuff.js"
-
 import { AddNodeCommand } from "./commands/addNodeCommand.js";
 import { RemoveNodeCommand } from "./commands/removeNodeCommand.js";
 import { AddEdgeCommand } from "./commands/addEdgeCommand.js";
 import { MoveNodeCommand } from "./commands/moveNodeCommand.js";
-// import { RemoveEdgeCommand } from "./commands/removeEdgeCommand.js";
+import { RemoveEdgeCommand } from "./commands/removeEdgeCommand.js";
 
 
 export class GraphEditor {
@@ -125,30 +121,27 @@ export class GraphEditor {
         thisGraph.nodeLabels = svgG.append("g").selectAll("g");
 
         thisGraph.drag = d3.drag()
-            .subject(function(d) {
+            .subject(function (d) {
                 return { x: d.x, y: d.y };
             })
-            .on("start", function(event, d) {
-                thisGraph.dragStartPos = {...d };
+            .on("start", function (event, d) {
+                thisGraph.dragStartPos = { ...d };
             })
-            .on("drag", function(event, d) {
-                thisGraph.state.justDragged = true;
+            .on("drag", function (event, d) {
+                thisGraph.editor.state.justDragged = true;
                 thisGraph.dragmove.call(thisGraph, event, d);
             })
-            .on("end", function(event, d) {
-                thisGraph.dragEndPos = {...d };
-                // if (!thisGraph.state.selectedNodes.includes(d)) {
-                //     thisGraph.replaceSelectNode(d3.select(this), d)
-                // }
-                if (thisGraph.state.shiftNodeDrag) {
-                    thisGraph.dragEnd.call(thisGraph, d3.select(this), event, thisGraph.state.mouseEnterNode);
+            .on("end", function (event, d) {
+                thisGraph.dragEndPos = { ...d };
+                if (thisGraph.editor.state.shiftNodeDrag) {
+                    thisGraph.dragEnd.call(thisGraph, d3.select(this), event, thisGraph.editor.state.mouseEnterNode);
                 } else if (
                     (thisGraph.dragStartPos.x !== thisGraph.dragEndPos.x) ||
                     (thisGraph.dragStartPos.y !== thisGraph.dragEndPos.y)
                 ) {
                     // TODO: Update for multiple nodes moving
-                    if (!thisGraph.state.selectedNodes.includes(d)) {
-                        thisGraph.replaceSelectNode(d3.select(this), d)
+                    if (!thisGraph.editor.state.selectedNodes.includes(d)) {
+                        thisGraph.replaceSelect(d3.select(this))
                     }
                     thisGraph.editor.execute(new MoveNodeCommand(thisGraph.editor, thisGraph.dragStartPos, thisGraph.dragEndPos));
                 }
@@ -157,21 +150,21 @@ export class GraphEditor {
 
         // listen for key events
         d3.select(window)
-            .on("keydown", function(event) {
+            .on("keydown", function (event) {
                 thisGraph.svgKeyDown.call(thisGraph, event);
             })
-            .on("keyup", function(event) {
+            .on("keyup", function (event) {
                 //console.log("keyup");
                 thisGraph.svgKeyUp.call(thisGraph, event);
             });
 
-        svg.on("mousedown", function(event, d) {
+        svg.on("mousedown", function (event, d) {
             thisGraph.svgMouseDown.call(thisGraph, event, d);
             if (event.shiftKey) {
                 event.stopImmediatePropagation();
             }
         });
-        svg.on("mouseup", function(event, d) {
+        svg.on("mouseup", function (event, d) {
             thisGraph.svgMouseUp.call(thisGraph, event, d);
         });
 
@@ -181,8 +174,8 @@ export class GraphEditor {
                 [0, 0],
                 [window.innerWidth, window.innerHeight]
             ])
-            .scaleExtent([0.3, 8])
-            .on("zoom", function(event) {
+            .scaleExtent([0.3, 10])
+            .on("zoom", function (event) {
                 if (event.sourceEvent.shiftKey || event.sourceEvent.ctrlKey) {
                     // TODO  the internal d3 state is still changing
                     return false;
@@ -191,39 +184,39 @@ export class GraphEditor {
                 }
                 return true;
             })
-            .on("start", function(event) {
+            .on("start", function (event) {
                 if (!event.sourceEvent.shiftKey)
                     d3.select('body').style("cursor", "grab");
             })
-            .on("end", function() {
+            .on("end", function () {
                 d3.select('body').style("cursor", "auto");
-            }).filter(function(e) {
+            }).filter(function (e) {
                 return !e.altKey; //would like it to be ctrl but won't work
             });
 
 
-        let dragSelectionBox = d3.drag().on('drag', function(event) {
-                let xy = thisGraph.getXYCoordinates(event);
-                thisGraph.selectionBox
-                    .attr('height', xy.y - thisGraph.state.selectionBox.y)
-                    .attr('width', xy.x - thisGraph.state.selectionBox.x);
-                // console.log("draggin and stuff");
-                //TODO: will need to save information somewhere and then draw from data 
-            })
-            .on('start', function(event) {
+        let dragSelectionBox = d3.drag().on('drag', function (event) {
+            let xy = thisGraph.getXYCoordinates(event);
+            thisGraph.selectionBox
+                .attr('height', xy.y - thisGraph.editor.state.selectionBox.y)
+                .attr('width', xy.x - thisGraph.editor.state.selectionBox.x);
+            // console.log("draggin and stuff");
+            //TODO: will need to save information somewhere and then draw from data 
+        })
+            .on('start', function (event) {
                 // console.log('drag start');
                 d3.select('.selectionbox').raise();
                 let xy = thisGraph.getXYCoordinates(event);
-                thisGraph.state.selectionBox.x = xy.x;
-                thisGraph.state.selectionBox.y = xy.y;
+                thisGraph.editor.state.selectionBox.x = xy.x;
+                thisGraph.editor.state.selectionBox.y = xy.y;
                 thisGraph.selectionBox.attr('x', xy.x).attr('y', xy.y);
                 thisGraph.selectionBox.classed("hidden", false);
 
-                console.log(thisGraph.state.selectionBox);
+                console.log(thisGraph.editor.state.selectionBox);
             })
-            .on('end', function() {
+            .on('end', function () {
                 console.log('drag end');
-                thisGraph.selectionBox.each(function(node, i) {
+                thisGraph.selectionBox.each(function (node, i) {
                     console.log(this.getBoundingClientRect());
                 })
                 thisGraph.selectionBox.classed("hidden", true);
@@ -234,27 +227,75 @@ export class GraphEditor {
                 //     console.log(this.getBoundingClientRect());
                 // })
             })
-            .filter(function(e) {
+            .filter(function (e) {
                 return e.altKey; //would like it to be ctrl but won't work
             });
 
         svg.call(dragSvg).on("dblclick.zoom", null);
         svg.call(dragSelectionBox);
         // listen for resize
-        window.onresize = function() {
+        window.onresize = function () {
             thisGraph.updateWindow(svg);
         };
 
         this.updateGraph()
 
+        document.addEventListener('keydown', (event) => {
+            var name = event.key;
+            var code = event.code;
+            // Alert the key name and key code on keydown
+            console.log(`Key pressed ${name} \r\n Key code value: ${code}`);
+
+
+            switch(name){
+                case 'Delete':
+                case 'Backspace':
+                    let selected = thisGraph.editor.state.selected;
+                    if (selected.length) {
+                        selected.forEach( // TODO: change to batch command
+                            function (selected) {
+                                if(selected.x && selected.y && !selected.target && !selected.source){
+                                    thisGraph.editor.execute(new RemoveNodeCommand(thisGraph.editor, selected)); 
+                                } else if (!selected.x && !selected.y && selected.target && selected.source){
+                                    thisGraph.editor.execute(new RemoveEdgeCommand(thisGraph.editor, selected)); 
+                                }
+                            }
+                        );
+        
+                        thisGraph.editor.state.selected = [];
+                        thisGraph.updateGraph();
+                    }
+                    break;
+                case 'Shift':
+                    thisGraph.editor.state.mode = MODES.create;
+                break;
+            }
+          }, false);
+
+          document.addEventListener('keyup', (event) => {
+            var name = event.key;
+            var code = event.code;
+            // Alert the key name and key code on keydown
+            console.log(`Key Up ${name} \r\n Key code value: ${code}`);
+
+
+            switch(name){
+                case 'Shift':
+                    thisGraph.editor.state.keyDown = [];
+                    thisGraph.editor.state.lastKeyDown = -1;
+                    thisGraph.editor.state.mode = MODES.default;
+                break;
+            }
+          }, false);
+
     }
     dragmove(event, d) {
         let thisGraph = this;
-        if (thisGraph.state.shiftNodeDrag || event.sourceEvent.shiftKey) {
+        if (thisGraph.editor.state.shiftNodeDrag || event.sourceEvent.shiftKey) {
             let xy = thisGraph.getXYCoordinates(event);
             thisGraph.dragLine.attr('d', 'M' + d.x + ',' + d.y + 'L' + xy.x + ',' + xy.y);
         } else {
-            if (thisGraph.state.selectedNodes.length > 1 && thisGraph.state.selectedNodes.includes(d)) {
+            if (thisGraph.editor.state.selectedNodes.length > 1 && thisGraph.editor.state.selectedNodes.includes(d)) {
                 // let xy = this.editor.snapToGrid(event.x, event.y);
 
                 d3.selectAll("." + thisGraph.consts.selectedClass)
@@ -276,50 +317,50 @@ export class GraphEditor {
         }
     }
     dragEnd(d3node, event, d) {
-            let thisGraph = this,
-                state = thisGraph.state,
-                consts = thisGraph.consts;
-            // reset the states
-            state.shiftNodeDrag = false;
-            d3node.classed(consts.connectClass, false);
+        let thisGraph = this,
+            state = thisGraph.editor.state,
+            consts = thisGraph.consts;
+        // reset the states
+        state.shiftNodeDrag = false;
+        d3node.classed(consts.connectClass, false);
 
-            let mouseDownNode = state.mouseDownNode;
-            let mouseEnterNode = state.mouseEnterNode;
+        let mouseDownNode = state.mouseDownNode;
+        let mouseEnterNode = state.mouseEnterNode;
 
-            if (state.justDragged) {
-                // dragged, not clicked
-                state.justDragged = false;
-            }
-
-            thisGraph.dragLine.classed("hidden", true);
-
-            if (!mouseDownNode || !mouseEnterNode)
-                return;
-
-
-            if (mouseDownNode !== d) {
-                // we're in a different node: create new edge for mousedown edge and add to graph
-                let edge = { source: mouseDownNode, target: d }
-                thisGraph.editor.execute(new AddEdgeCommand(thisGraph.editor, edge));
-            }
-            state.mouseDownNode = null;
-            state.mouseEnterNode = null;
-            return;
+        if (state.justDragged) {
+            // dragged, not clicked
+            state.justDragged = false;
         }
-        // keydown on main svg
+
+        thisGraph.dragLine.classed("hidden", true);
+
+        if (!mouseDownNode || !mouseEnterNode)
+            return;
+
+
+        if (mouseDownNode !== d) {
+            // we're in a different node: create new edge for mousedown edge and add to graph
+            let edge = { source: mouseDownNode, target: d }
+            thisGraph.editor.execute(new AddEdgeCommand(thisGraph.editor, edge));
+        }
+        state.mouseDownNode = null;
+        state.mouseEnterNode = null;
+        return;
+    }
+    // keydown on main svg
     svgKeyDown(event) {
         let thisGraph = this,
-            state = thisGraph.state,
+            state = thisGraph.editor.state,
             consts = thisGraph.consts,
             keyCode = event.keyCode;
 
 
         //TODO: create a class for this!
-        var includes = function(what) {
-                let array = state.keyDown
-                return array.includes(what);
-            },
-            just = function(what) {
+        var includes = function (what) {
+            let array = state.keyDown
+            return array.includes(what);
+        },
+            just = function (what) {
                 let array = state.keyDown
                 return array.includes(what) && array.length === 1;
             };
@@ -334,34 +375,49 @@ export class GraphEditor {
         // console.log(state.keyDown.toString());
 
         let selectedNodes = state.selectedNodes,
-            selectedEdges = state.selectedEdges;
+            selectedEdges = state.selectedEdges,
+            selected = state.selected;
         // console.log(state.keyDown, [consts.BACKSPACE_KEY]);
 
         if (just(consts.DELETE_KEY) || just(consts.BACKSPACE_KEY)) {
             event.preventDefault();
-            if (selectedNodes.length) {
-                selectedNodes.forEach( // TODO: change to batch command
-                    (selectedNode) => thisGraph.editor.execute(new RemoveNodeCommand(thisGraph.editor, selectedNode))
-                );
 
-                state.selectedNode = null;
-                state.selectedNodes = [];
-                thisGraph.updateGraph();
-            } else if (selectedEdges.length) {
-                selectedEdges.forEach(
-                    (selectedEdge) => thisGraph.editor.graph.removeEdge(selectedEdge)
-                );
+            //TODO: Split by nodes and edges
 
-                state.selectedEdge = null;
-                state.selectedEdges = [];
-                thisGraph.updateGraph();
-            }
+            // if (selectedNodes.length) {
+            //     selectedNodes.forEach( // TODO: change to batch command
+            //         (selectedNode) => thisGraph.editor.execute(new RemoveNodeCommand(thisGraph.editor, selectedNode))
+            //     );
+
+            //     state.selectedNode = null;
+            //     state.selectedNodes = [];
+            //     thisGraph.updateGraph();
+            // } else if (selectedEdges.length) {
+            //     selectedEdges.forEach(
+            //         (selectedEdge) => thisGraph.editor.graph.removeEdge(selectedEdge)
+            //     );
+
+            //     state.selectedEdge = null;
+            //     state.selectedEdges = [];
+            //     thisGraph.updateGraph();
+            // } else if (selected.length) {
+            //     selected.forEach( // TODO: change to batch command
+            //         function (selected) {
+            //             if(selected.x && selected.y && !selected.target && !selected.source){
+            //                 thisGraph.editor.execute(new RemoveNodeCommand(thisGraph.editor, selected)); 
+            //             } else if (!selected.x && !selected.y && selected.target && selected.source){
+            //                 thisGraph.editor.execute(new RemoveEdgeCommand(thisGraph.editor, selected)); 
+            //             }
+            //         }
+            //     );
+
+            //     state.selected = [];
+            //     thisGraph.updateGraph();
+            // }
         } else if (just(consts.SHIFT_KEY)) {
             state.mode = MODES.create;
         } else if (includes(consts.CTRL_KEY) && includes(65)) {
-            console.log("Select All");
-            thisGraph.selectNodes(d3.selectAll("." + consts.circleGClass));
-            thisGraph.updateGraph();
+            thisGraph.select(d3.selectAll("." + consts.circleGClass + ", .link")); //
         } else if (just(consts.CTRL_KEY)) {
             // thisGraph.svg.append('g')
             //     .attr('class', 'brush')
@@ -369,26 +425,27 @@ export class GraphEditor {
         }
     }
     svgKeyUp() {
-            this.state.keyDown = [];
-            this.state.lastKeyDown = -1;
-            this.state.mode = MODES.default;
-        }
-        // mousedown on main svg
+        this.editor.state.keyDown = [];
+        this.editor.state.lastKeyDown = -1;
+        this.editor.state.mode = MODES.default;
+    }
+    // mousedown on main svg
     svgMouseDown() {
-        this.state.graphMouseDown = true;
+        let thisGraph = this;
+        thisGraph.editor.state.graphMouseDown = true;
     }
     getXYCoordinates(event) {
-            let thisGraph = this,
-                pt = thisGraph.svg.node().createSVGPoint(),
-                xyAll = d3.pointer(event, d3.select("." + thisGraph.consts.graphClass).node());
-            pt.x = xyAll[0];
-            pt.y = xyAll[1];
-            return pt;
-        }
-        // mouseup on main svg
+        let thisGraph = this,
+            pt = thisGraph.svg.node().createSVGPoint(),
+            xyAll = d3.pointer(event, d3.select("." + thisGraph.consts.graphClass).node());
+        pt.x = xyAll[0];
+        pt.y = xyAll[1];
+        return pt;
+    }
+    // mouseup on main svg
     svgMouseUp(event) {
         let thisGraph = this,
-            state = thisGraph.state;
+            state = thisGraph.editor.state;
         if (state.justScaleTransGraph) {
             // dragged not clicked
             state.justScaleTransGraph = false;
@@ -399,7 +456,7 @@ export class GraphEditor {
 
         } else if (state.graphMouseDown && state.mode === MODES.create && event.ctrlKey) {
             //get selected node
-            let selected = thisGraph.state.selectedNodes;
+            let selected = thisGraph.editor.state.selectedNodes;
             let xy = thisGraph.getXYCoordinates(event);
             let newNode = thisGraph.editor.graph.createNode(xy.x, xy.y);
 
@@ -414,7 +471,7 @@ export class GraphEditor {
             // select new node
             thisGraph.removeSelectFromAllNodes();
             thisGraph.updateGraph();
-            thisGraph.selectNodeById(newNode.id);
+            thisGraph.selectById(newNode.id);
             // thisGraph.updateGraph();
         } else if (state.shiftNodeDrag) {
             // dragged from node
@@ -426,166 +483,147 @@ export class GraphEditor {
         state.graphMouseDown = false;
     }
     pathMouseDown(d3path, event, d) {
-            let thisGraph = this,
-                state = thisGraph.state;
-            event.stopPropagation();
-            state.mouseDownLink = d;
+        let thisGraph = this,
+            state = thisGraph.editor.state;
+        event.stopPropagation();
+        state.mouseDownLink = d;
 
-            if (state.selectedNode) {
-                thisGraph.removeSelectFromAllNodes();
-            }
+        //TODO: FIX! filter for just edges...
 
-            if (!state.selectedEdges.includes(d)) {
-                if (event.ctrlKey) {
-                    thisGraph.selectEdge(d3path, d);
-                } else {
-                    thisGraph.replaceSelectEdge(d3path, d);
-                };
+        // if (state.selected.includes(d)) {
+        //     thisGraph.removeSelectFromAll();
+        // }
+
+        if (event.ctrlKey) {
+            if (state.selected.includes(d)) {
+                thisGraph.removeSelect(d3path);
             } else {
-                if (state.selectedEdges.length > 1 && !event.ctrlKey) {
-                    thisGraph.replaceSelectEdge(d3path, d);
-                } else {
-                    thisGraph.removeSelectFromEdge(d3path);
-                }
+                thisGraph.select(d3path);
+            }
+
+        } else {
+            if (state.selected.includes(d)) {
+                thisGraph.removeSelect(d3path);
+            } else {
+                thisGraph.replaceSelect(d3path);
             }
         }
-        // mousedown on node
+
+    }
+    // mousedown on node
     circleMouseDown(xyz, event, d) {
-            let thisGraph = this,
-                state = thisGraph.state;
-            event.stopPropagation();
-            state.mouseDownNode = d;
-            // console.log(`mousedownnode = ${JSON.stringify(d)}`);
-            if (event.shiftKey) {
-                state.shiftNodeDrag = event.shiftKey;
-                // reposition dragged directed edge
-                thisGraph.dragLine.classed('hidden', false)
-                    .attr('d', 'M' + d.x + ',' + d.y + 'L' + d.x + ',' + d.y);
-                return;
-            }
+        let thisGraph = this,
+            state = thisGraph.editor.state;
+        event.stopPropagation();
+        state.mouseDownNode = d;
+        // console.log(`mousedownnode = ${JSON.stringify(d)}`);
+        if (event.shiftKey) {
+            state.shiftNodeDrag = event.shiftKey;
+            // reposition dragged directed edge
+            thisGraph.dragLine.classed('hidden', false)
+                .attr('d', 'M' + d.x + ',' + d.y + 'L' + d.x + ',' + d.y);
+            return;
         }
-        // mouseup on nodes
+    }
+    // mouseup on nodes
     circleMouseUp(d3node, event, d) {
         let thisGraph = this,
-            state = thisGraph.state,
+            state = thisGraph.editor.state,
             consts = thisGraph.consts;
         // reset the states
         state.shiftNodeDrag = false;
         d3node.classed(consts.connectClass, false);
 
-        if (state.selectedEdge) { thisGraph.removeSelectFromAllEdges(); }
+        if (state.selectedEdge) { thisGraph.removeSelectFromAll(); }
         if (!state.selectedNodes.includes(d)) {
             if (event.ctrlKey) {
-                thisGraph.selectNode(d3node, d);
+                thisGraph.select(d3node);
             } else {
-                thisGraph.replaceSelectNode(d3node, d);
+                thisGraph.replaceSelect(d3node);
             }
         } else {
             if (state.selectedNodes.length > 1 && !event.ctrlKey) {
-                thisGraph.replaceSelectNode(d3node, d);
+                thisGraph.replaceSelect(d3node);
             } else {
-                thisGraph.removeSelectFromNode(d3node);
+                thisGraph.removeSelect(d3node);
             }
 
         }
 
     }
-    selectEdge(d3path, edgeData) {
+
+    select(d3Object) {
+
         let thisGraph = this;
-        d3path.classed(thisGraph.consts.selectedClass, true);
-        thisGraph.state.selectedEdge = edgeData;
-        thisGraph.state.selectedEdges.push(edgeData);
-        //thisGraph.updateSidebar();
-    }
-    selectNode(d3node, nodeData) {
-        let thisGraph = this;
-        d3node.classed(thisGraph.consts.selectedClass, true);
-        thisGraph.state.selectedNode = nodeData;
-        thisGraph.state.selectedNodes.push(nodeData);
-        this.editor.state.selectedNode = nodeData;
-        this.editor.state.selectedNodes.push(nodeData);
-        //thisGraph.updateSidebar();
+
+        d3Object.classed(thisGraph.consts.selectedClass, true);
+
+        this.editor.state.selected.push(...d3Object.data());
+
+        thisGraph.editor.signals.objectSelected.dispatch(this.editor.state.selected);
+
         thisGraph.shortestPath();
-        thisGraph.editor.signals.objectSelected.dispatch(this.editor.state.selectedNodes);
+
     }
 
-    selectNodes(selection) {
+    selectById(id) {
+
         let thisGraph = this;
-        selection.classed(thisGraph.consts.selectedClass, true);
-        thisGraph.state.selectedNode = selection.data()[0];
-        thisGraph.state.selectedNodes.push(...selection.data());
-        // thisGraph.updateSidebar();
+
+        thisGraph.select(d3.select('#id' + id));
+
     }
 
-    selectNodeById(nodeId) {
-        let thisGraph = this;
-        thisGraph.selectNode(d3.select('#id' + nodeId), d3.select('#id' + nodeId).data()[0]);
-    }
+    replaceSelect(d3Object) {
 
-    replaceSelectEdge(d3path, edgeData) {
         let thisGraph = this;
-        if (thisGraph.state.selectedEdges.length) {
-            thisGraph.removeSelectFromAllEdges();
+
+        if (thisGraph.editor.state.selected.length) {
+
+            thisGraph.removeSelectFromAll();
+
         }
-        thisGraph.selectEdge(d3path, edgeData);
+
+        thisGraph.select(d3Object);
+
     }
-    replaceSelectNode(d3node, nodeData) {
+
+    removeSelect(d3Object) {
+
         let thisGraph = this;
-        if (thisGraph.state.selectedNodes.length) {
-            thisGraph.removeSelectFromAllNodes();
-        }
-        thisGraph.selectNode(d3node, nodeData);
-    }
-    removeSelectFromNode(d3node) {
-        let thisGraph = this;
-        d3node.classed(thisGraph.consts.selectedClass, false);
-        thisGraph.state.selectedNode = null;
-        this.editor.state.selectedNode = null;
-        this.editor.state.selectedNodes.splice(thisGraph.state.selectedNodes.indexOf(d3node), 1);
-        thisGraph.state.selectedNodes.splice(thisGraph.state.selectedNodes.indexOf(d3node), 1);
-        thisGraph.editor.signals.objectSelected.dispatch(this.editor.state.selectedNodes);
-        // thisGraph.updateSidebar();
+
+        d3Object.classed(thisGraph.consts.selectedClass, false);
+
+        this.editor.state.selected.splice(thisGraph.editor.state.selected.indexOf(d3Object), 1);
+
+        thisGraph.editor.signals.objectSelected.dispatch(this.editor.state.selected);
+
         thisGraph.shortestPath();
+
     }
-    removeSelectFromEdge(d3path) {
+
+    removeSelectFromAll() {
+
         let thisGraph = this;
-        d3path.classed(thisGraph.consts.selectedClass, false);
-        thisGraph.state.selectedEdge = null;
-        thisGraph.state.selectedEdges.splice(thisGraph.state.selectedEdges.indexOf(d3path), 1);
-        thisGraph.editor.signals.objectSelected.dispatch(this.editor.state.selectedNodes);
-        // thisGraph.updateSidebar();
+
+        thisGraph.getSelected().classed(thisGraph.consts.selectedClass, false);
+
+        this.editor.state.selected = [];
+
+        thisGraph.editor.signals.objectSelected.dispatch(this.editor.state.selected);
+
+        thisGraph.shortestPath();
+
     }
-    removeSelectFromAllEdges() {
-        let thisGraph = this;
-        thisGraph.paths.filter(function(cd) {
-            return thisGraph.state.selectedEdges.includes(cd);
-        }).classed(thisGraph.consts.selectedClass, false);
-        thisGraph.state.selectedEdge = null;
-        thisGraph.state.selectedEdges = [];
-        thisGraph.editor.signals.objectSelected.dispatch(this.editor.state.selectedNodes);
-        // thisGraph.updateSidebar();
-    }
-    removeSelectFromAllNodes() {
-        let thisGraph = this;
-        thisGraph.circles.filter(function(cd) {
-            return thisGraph.state.selectedNodes.includes(cd);
-        }).classed(thisGraph.consts.selectedClass, false);
 
-
-        thisGraph.state.selectedNode = null;
-        thisGraph.state.selectedNodes = [];
-
-        this.editor.state.selectedNode = null;
-        this.editor.state.selectedNodes = [];
-
-        thisGraph.editor.signals.objectSelected.dispatch(this.editor.state.selectedNodes);
-
-        // thisGraph.updateSidebar();
-    }
     getSelected() {
+
         let thisGraph = this;
+
         return d3.selectAll("." + thisGraph.consts.selectedClass);
+
     }
+
     deleteGraph(skipPrompt) {
         let thisGraph = this,
             doDelete = true;
@@ -597,20 +635,25 @@ export class GraphEditor {
             thisGraph.updateGraph();
         }
     }
+
     shortestPath() {
+
         let thisGraph = this;
+
         thisGraph.editor.graph.createAdjancency();
+
         d3.selectAll('.start-node').classed("start-node", false);
         d3.selectAll('.end-node').classed("end-node", false);
         d3.selectAll('.visited').classed("visited", false);
 
-        let selectedArray = thisGraph.state.selectedNodes.map(node => node.id);
+        let selectedArray = thisGraph.editor.state.selected.map(node => node.id);
+
         let result = thisGraph.editor.graph.findShortestPathsFromArray(selectedArray);
 
-        // d3.select('#id' + selectedArray[0]).classed("start-node", true);
-        // d3.select('#id' + selectedArray[1]).classed("end-node", true);
         thisGraph.classNodes(result.path, "visited");
-        thisGraph.updateGraph();
+
+        // thisGraph.updateGraph();
+
     }
     align(dimension = 'x', mode = 3) {
 
@@ -648,7 +691,7 @@ export class GraphEditor {
 
                 break;
             default:
-                // code block
+            // code block
         }
 
         if (changeTo !== null) {
@@ -661,22 +704,22 @@ export class GraphEditor {
         thisGraph.updateGraph();
     }
     classNodes(idArray, className) {
-            return idArray.forEach((node, idx, array) => {
-                let node1 = array[idx],
-                    node2 = array[idx + 1];
-                d3.select('#id' + node).classed(className, true);
+        return idArray.forEach((node, idx, array) => {
+            let node1 = array[idx],
+                node2 = array[idx + 1];
+            d3.select('#id' + node).classed(className, true);
 
-                if (node1 !== node2 && !(node1 === undefined || node2 === undefined)) {
-                    d3.select('#id' + node1 + "-" + node2).classed(className, true);
-                    d3.select('#id' + node2 + "-" + node1).classed(className, true);
-                }
-            });
-        }
-        // call to propagate changes to graph
+            if (node1 !== node2 && !(node1 === undefined || node2 === undefined)) {
+                d3.select('#id' + node1 + "-" + node2).classed(className, true);
+                d3.select('#id' + node2 + "-" + node1).classed(className, true);
+            }
+        });
+    }
+    // call to propagate changes to graph
     updateGraph() {
         let thisGraph = this,
             consts = thisGraph.consts,
-            state = thisGraph.state;
+            state = thisGraph.editor.state;
         // let arr = d3.range(0, 100);
         // let  arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99];
 
@@ -734,18 +777,18 @@ export class GraphEditor {
 
         ///////////////////////////////////////////
 
-        thisGraph.paths = thisGraph.paths.data(thisGraph.editor.graph.edges, function(d) {
+        thisGraph.paths = thisGraph.paths.data(thisGraph.editor.graph.edges, function (d) {
             return String(d.source.id) + "+" + String(d.target.id);
         });
         let paths = thisGraph.paths;
         // update existing paths
         paths.style('marker-end', 'url(#end-arrow)')
-            .style('marker-start', function(d) { return !d.oneway ? 'url(#start-arrow)' : ''; })
-            .classed(consts.selectedClass, function(d) {
-                return d === state.selectedEdge;
-            })
+            .style('marker-start', function (d) { return !d.oneway ? 'url(#start-arrow)' : ''; })
+            // .classed(consts.selectedClass, function (d) {
+            //     return d === state.selectedEdge;
+            // })
             // .attr("d", line([d.source.x, d.source.y, d.target.x, d.target.y]));
-            .attr("d", function(d) {
+            .attr("d", function (d) {
                 return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y;
             });
 
@@ -756,18 +799,18 @@ export class GraphEditor {
         paths = paths.enter()
             .append("path")
             .style('marker-end', 'url(#end-arrow)')
-            .style('marker-start', function(d) { return !d.oneway ? 'url(#start-arrow)' : ''; })
+            .style('marker-start', function (d) { return !d.oneway ? 'url(#start-arrow)' : ''; })
             .classed("link", true)
-            .attr("id", function(d) { return "id" + d.source.id + "-" + d.target.id })
-            .attr("d", function(d) {
+            .attr("id", function (d) { return "id" + d.source.id + "-" + d.target.id })
+            .attr("d", function (d) {
                 return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y;
             })
             .merge(paths)
-            .on("mouseup", function(d) {
+            .on("mouseup", function (d) {
                 console.log('mouseup link');
                 state.mouseDownLink = null;
             })
-            .on("mousedown", function(event, d) {
+            .on("mousedown", function (event, d) {
                 thisGraph.pathMouseDown.call(thisGraph, d3.select(this), event, d);
             })
 
@@ -775,15 +818,15 @@ export class GraphEditor {
 
         ///////////////////////////////////////////
 
-        thisGraph.pathLabels = thisGraph.pathLabels.data(thisGraph.editor.graph.edges, function(d) {
+        thisGraph.pathLabels = thisGraph.pathLabels.data(thisGraph.editor.graph.edges, function (d) {
             return String(d.source.id) + "+" + String(d.target.id);
         });
         let pathLabels = thisGraph.pathLabels;
         // update existing paths
         pathLabels
-            .attr("x", function(d) { return ((d.source.x + d.target.x) / 2); })
-            .attr("y", function(d) { return ((d.source.y + d.target.y) / 2); })
-            .text(function(d) {
+            .attr("x", function (d) { return ((d.source.x + d.target.x) / 2); })
+            .attr("y", function (d) { return ((d.source.y + d.target.y) / 2); })
+            .text(function (d) {
                 let option = thisGraph.editor.config.getKey('settings/edgetext')
                 switch (option) {
                     case "weight":
@@ -797,7 +840,7 @@ export class GraphEditor {
                         return d[option];
                 }
             })
-            .attr("transform", function(d) {
+            .attr("transform", function (d) {
                 let xMid = ((d.source.x + d.target.x) / 2),
                     yMid = ((d.source.y + d.target.y) / 2),
                     angle = Math.atan2(d.source.y - d.target.y, d.source.x - d.target.x);
@@ -812,9 +855,9 @@ export class GraphEditor {
         // add new paths
         pathLabels = pathLabels.enter()
             .append("text")
-            .attr("x", function(d) { return ((d.source.x + d.target.x) / 2); })
-            .attr("y", function(d) { return ((d.source.y + d.target.y) / 2); })
-            .text(function(d) {
+            .attr("x", function (d) { return ((d.source.x + d.target.x) / 2); })
+            .attr("y", function (d) { return ((d.source.y + d.target.y) / 2); })
+            .text(function (d) {
                 let option = thisGraph.editor.config.getKey('settings/edgetext')
                 switch (option) {
                     case "weight":
@@ -828,7 +871,7 @@ export class GraphEditor {
                         return d[option];
                 }
             })
-            .attr("transform", function(d) {
+            .attr("transform", function (d) {
                 let xMid = ((d.source.x + d.target.x) / 2),
                     yMid = ((d.source.y + d.target.y) / 2),
                     angle = Math.atan2(d.source.y - d.target.y, d.source.x - d.target.x);
@@ -846,66 +889,60 @@ export class GraphEditor {
         /////////////////////////////////////////////
 
         // update existing nodes
-        thisGraph.circles = thisGraph.circles.data(thisGraph.editor.graph.nodes, function(d) {
+        thisGraph.circles = thisGraph.circles.data(thisGraph.editor.graph.nodes, function (d) {
             return d.id;
         });
 
         // remove old nodes
         thisGraph.circles.exit().remove();
 
-        thisGraph.circles.attr("transform", function(d) {
+        thisGraph.circles.attr("transform", function (d) {
             return "translate(" + d.x + "," + d.y + ")";
         });
 
 
         // add new nodes
-        let newGs = thisGraph.circles.enter()
+        let newNodes = thisGraph.circles.enter()
             .append("g").merge(thisGraph.circles);
 
-        newGs.classed(consts.circleGClass, true)
-            .attr("transform", function(d) {
+        newNodes.classed(consts.circleGClass, true)
+            .attr("transform", function (d) {
                 return "translate(" + d.x + "," + d.y + ")";
             })
-            .attr("id", function(d) { return "id" + d.id })
-            .on("mouseover", function(event, d) {
+            .attr("id", function (d) { return "id" + d.id })
+            .on("mouseover", function (event, d) {
                 state.mouseEnterNode = d;
                 if (state.shiftNodeDrag) {
                     d3.select(this).classed(consts.connectClass, true);
                 }
             })
-            .on("mouseout", function(d) {
+            .on("mouseout", function (d) {
                 state.mouseEnterNode = null;
                 d3.select(this).classed(consts.connectClass, false);
             })
-            .on("mousedown", function(event, d) {
+            .on("mousedown", function (event, d) {
                 thisGraph.circleMouseDown.call(thisGraph, d3.select(this), event, d);
             })
-            .on("click", function(event, d) {
+            .on("click", function (event, d) {
                 thisGraph.circleMouseUp.call(thisGraph, d3.select(this), event, d);
             })
             .call(thisGraph.drag);
 
-        thisGraph.circles = newGs;
+        thisGraph.circles = newNodes;
 
         // Add Circles on Node to make visible
-        thisGraph.circles.each(function(d) {
+        thisGraph.circles.each(function (d) {
             if (this.childNodes.length === 0) {
                 d3.select(this)
                     .append("circle")
                     .attr("r", String(consts.nodeRadius));
-
-                // d3.select(this).append("text")
-                //     .attr("text-anchor", "middle")
-                //     .attr('alignment-baseline', 'central')
-                //     .classed(thisGraph.consts.textClass, true)
-                //     .text(d => d.title);
             }
         });
 
 
         //////////////////////////////////////////
 
-        thisGraph.nodeLabels = thisGraph.nodeLabels.data(thisGraph.editor.graph.nodes, function(d) {
+        thisGraph.nodeLabels = thisGraph.nodeLabels.data(thisGraph.editor.graph.nodes, function (d) {
             return String(d.id);
         });
         let nodeLabels = thisGraph.nodeLabels;
@@ -936,7 +973,7 @@ export class GraphEditor {
 
     }
     zoomed(event) {
-        this.state.justScaleTransGraph = true;
+        this.editor.state.justScaleTransGraph = true;
         d3.select("." + this.consts.graphClass)
             .attr("transform", event.transform);
     }
@@ -947,6 +984,7 @@ export class GraphEditor {
         let y = window.innerHeight || docEl.clientHeight || bodyEl.clientHeight;
         svg.attr("width", x).attr("height", y);
     }
+
 }
 
 const MODES = {
