@@ -7,7 +7,7 @@ function Resizer(editor) {
     const dom = document.createElement('div');
     dom.id = 'resizer';
 
-    dom.ownerDocument.addEventListener('dblclick', onDblClick, false);
+    dom.addEventListener('dblclick', onDblClick, false);
 
     function onPointerDown(event) {
 

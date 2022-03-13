@@ -1,6 +1,7 @@
 :root {
     color-scheme: light dark;
-    --accent: #08f
+    --accent: rgb(0, 136, 255);
+    --selected: rgb(229, 172, 247);
 }
 
 body {
@@ -199,8 +200,8 @@ select:hover {
 #resizer {
     position: absolute;
     top: 32px;
-    right: 320px;
-    width: 3px;
+    right: 325px;
+    width: 6px;
     bottom: 0px;
     cursor: col-resize;
     background-color: rgba(102, 102, 102, 0.1);
@@ -296,6 +297,24 @@ select:hover {
     line-height: 16px;
 }
 
+#menubar .menu .project-title {
+    display: inline-block;
+    color: #888;
+    font-weight: bold;
+    font-size: large;
+    text-align: center;
+    height: 26px;
+    margin: 0;
+    padding: 8px;
+    /* line-height: 13px; */
+    background:transparent;
+}
+
+#menubar .menu .project-title:focus {
+    background: rgb(117, 117, 117);
+    color: #111;
+}
+
 #menubar .menu .options {
     position: fixed;
     display: none;
@@ -343,7 +362,7 @@ select:hover {
     right: 0;
     top: 32px;
     bottom: 0;
-    width: 320px;
+    width: 325px;
     background: #eee;
     overflow: auto;
 }
@@ -487,7 +506,7 @@ select:hover {
     #sidebar {
         left: 0;
         width: 100%;
-        top: calc(100% - 320px);
+        top: calc(100% - 325px);
         bottom: 0;
     }
 }

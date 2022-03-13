@@ -21,40 +21,30 @@ function Editor() {
         savingFinished: new Signal(),
     }
 
+    this.MODES = {
+        default: "default",
+        current: "default",
+        create: "create",
+        edit: "edit",
+    }
+
     this.config = new Config();
     this.loader = new FileManager(this);
     this.history = new _History(this);
     this.storage = new _Storage();
-
-    this.consts = {
-        selectedClass: "selected",
-        connectClass: "connect-node",
-        circleGClass: "conceptG",
-        graphClass: "graph",
-        textClass: "id-text",
-        activeEditId: "active-editing",
-        BACKSPACE_KEY: 8,
-        DELETE_KEY: 46,
-        ENTER_KEY: 13,
-        SHIFT_KEY: 16,
-        CTRL_KEY: 17,
-        nodeRadius: 20
-    }
 
     this.defaults = {
         oneway: false,
     }
 
     this.settings = {
-        sidebarSnap: 300,
+        sidebarSnap: 325,
     }
 
     this.state = {
         selectBrush: false,
         selectedNode: null,
-        selectedNodes: [],
-        selectedEdges: [],
-        selected:[],
+        selected: [],
         selectedEdge: null,
         mouseDownNode: null,
         mouseEnterNode: null,
@@ -66,7 +56,14 @@ function Editor() {
         shiftNodeDrag: false,
         selectedText: null,
         selectionBox: {},
-        grid: { centre: { x: 0, y: 0 }, dimensions: { x: 10, y: 10 }, active: true, lines: { horizontal: [], vertical: [] } },
+        grid: {
+            centre: { x: 0, y: 0 },
+            dimensions: { x: 10, y: 10 },
+            active: true,
+            threshold: 0.2,
+            transform: {x:0,y:0,k:1}, 
+            // lines: { horizontal: [], vertical: [] } 
+        },
     };
 
     this.backgroundImageData = {
@@ -82,34 +79,32 @@ function Editor() {
 }
 
 Editor.prototype = {
-    addNode: function(node) {
+    addNode: function (node) {
         this.graph.createNode(node);
         this.signals.graphDataChanged.dispatch();
     },
-    removeNode: function(node) {
+    removeNode: function (node) {
         this.graph.removeNode(node);
         this.signals.graphDataChanged.dispatch();
     },
-    addEdge: function(edge) {
+    addEdge: function (edge) {
         this.graph.createEdge(edge.source, edge.target, edge.oneway | this.defaults.oneway)
         this.signals.graphDataChanged.dispatch();
     },
-    removeEdge: function(edge) {
+    removeEdge: function (edge) {
         this.graph.removeEdge(edge);
         this.signals.graphDataChanged.dispatch();
     },
-    moveNode: function(nodeId, nodeInfo) {
+    moveNode: function (nodeId, nodeInfo) {
         let newNode = this.graph.setNode(nodeId, nodeInfo);
-        this.signals.nodeDataChanged.dispatch(newNode);
         this.signals.graphDataChanged.dispatch();
     },
-    setValue: function(nodeId, nodeInfo) {
+    setValue: function (nodeId, nodeInfo) {
         let newNode = this.graph.setNode(nodeId, nodeInfo);
-        this.signals.nodeDataChanged.dispatch(newNode);
         this.signals.graphDataChanged.dispatch();
+        console.log(editor.state.selected);
     },
-    snapToGrid: function(x, y) {
-
+    snapToGrid: function (x, y) {
         if (this.state.grid.active === true) {
             x = round(x, this.state.grid.dimensions.x) + this.state.grid.centre.x;
             y = round(y, this.state.grid.dimensions.y) + this.state.grid.centre.y;
@@ -122,34 +117,34 @@ Editor.prototype = {
     },
 
 
-    execute: function(cmd, optionalName) {
+    execute: function (cmd, optionalName) {
 
         this.history.execute(cmd, optionalName);
 
     },
 
-    undo: function() {
+    undo: function () {
 
         this.history.undo();
 
     },
 
-    redo: function() {
+    redo: function () {
 
         this.history.redo();
 
     },
-    clear: function() {
+    clear: function () {
         this.config.setKey('project/title', 'untitled')
         this.graph.resetGraph();
         this.history.clear();
         this.signals.graphDataChanged.dispatch();
     },
-    toJSON: function() {
+    toJSON: function () {
 
         return {
 
-            metadata: {},
+            metadata: { "units": "cm" },
             project: {
                 // project info
             },
@@ -159,7 +154,7 @@ Editor.prototype = {
         };
 
     },
-    fromJSON: async function(json) {
+    fromJSON: async function (json) {
 
         // this.history.fromJSON( json.history );
         this.graph.fromJSON(json.graph);

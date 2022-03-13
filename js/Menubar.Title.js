@@ -1,29 +1,40 @@
-import { UIPanel, UIText, UICheckbox } from './libs/ui.js';
+import { UIPanel, UIText, UICheckbox, UIInput } from './libs/ui.js';
 
 
 function MenubarTitle( editor ) {
 
-	var strings = editor.strings;
-
 	var container = new UIPanel();
 	container.setClass( 'menu center' );
+	// container.setPaddingTop('5px');
+
+	// var titleStatic = new UIText( ' | ' + editor.config.getKey('project/title') + ' | ' );
+	// titleStatic.setClass( 'title' );
+	// titleStatic.onDblClick( function () {
+	// 	console.log('hide and edit')
+	// } );
+
+	// container.add( titleStatic );
+
+	var title = new UIInput( editor.config.getKey('project/title') );
+	title.setClass( 'project-title' );
+
+	title.onChange(function(){
+		editor.config.setKey('project/title',title.getValue())
+	})
+
+	container.add( title );
 
 	editor.signals.savingStarted.add( function () {
 
-		// autosave.text.setTextDecoration( 'underline' );
+		title.setTextDecoration( 'underline' );
 
 	} );
 
 	editor.signals.savingFinished.add( function () {
 
-		// autosave.text.setTextDecoration( 'none' );
+		title.setTextDecoration( 'none' );
 
 	} );
-
-	var title = new UIText( ' | ' + editor.config.getKey('project/title') + ' | ' );
-	title.setClass( 'title' );
-	// version.setOpacity( 0.5 );
-	container.add( title );
 
 	return container;
 

@@ -62,6 +62,7 @@
 		import { Menubar } from './js/Menubar.js';
 		import { Resizer } from './js/Resizer.js';
 		import { GraphEditor } from './js/Renderer.js';
+		import { KeyMap } from './js/KeyMap.js';
 		// import { VRButton } from '../examples/jsm/webxr/VRButton.js';
 
 		window.URL = window.URL || window.webkitURL;
@@ -99,10 +100,12 @@
 		var menubar = new Menubar(editor);
 		document.body.appendChild(menubar.dom);
 
-		var resizer = new Resizer( editor );
-		document.body.appendChild( resizer.dom );
+		var resizer = new Resizer(editor);
+		document.body.appendChild(resizer.dom);
 
 		var graphEditor = new GraphEditor(editor);
+
+		var keyMap = new KeyMap(editor, graphEditor, sidebar);
 
 		//
 

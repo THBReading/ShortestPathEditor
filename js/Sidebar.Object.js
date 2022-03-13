@@ -38,7 +38,7 @@ function SidebarObject(editor) {
 		editor.execute(
 			new SetValueCommand(
 				editor,
-				editor.state.selectedNode,
+				editor.state.selected[0],
 				"title",
 				objectTitle.getValue()
 			)
@@ -54,7 +54,7 @@ function SidebarObject(editor) {
 
 	var objectOrderRow = new UIRow();
 	var objectOrder = new UIInteger().setWidth('50px').onChange(function () {
-		editor.execute(new SetValueCommand(editor, editor.state.selectedNode, "order", objectOrder.getValue()));
+		editor.execute(new SetValueCommand(editor, editor.state.selected[0], "order", objectOrder.getValue()));
 	});
 
 	objectOrderRow.add(new UIText('Order').setWidth('90px'));
@@ -66,10 +66,10 @@ function SidebarObject(editor) {
 
 	var objectPositionRow = new UIRow();
 	var objectPositionX = new UIInteger().setWidth('50px').onChange(function () {
-		editor.execute(new MoveNodeCommand(editor, editor.state.selectedNode, { x: objectPositionX.getValue() }));
+		editor.execute(new MoveNodeCommand(editor, editor.state.selected[0], { x: objectPositionX.getValue() }));
 	});
 	var objectPositionY = new UIInteger().setWidth('50px').onChange(function () {
-		editor.execute(new MoveNodeCommand(editor, editor.state.selectedNode, { y: objectPositionY.getValue() }));
+		editor.execute(new MoveNodeCommand(editor, editor.state.selected[0], { y: objectPositionY.getValue() }));
 	});
 
 	objectPositionRow.add(new UIText("Position").setWidth('90px'));
@@ -137,7 +137,7 @@ function SidebarObject(editor) {
 		function (node) {
 			if (!editor.state.selectedNode) { return; }
 			if (node.id !== editor.state.selectedNode.id) { return; }
-			updateUI(editor.state.selectedNodes);
+			updateUI(editor.state.selected);
 		}
 	)
 

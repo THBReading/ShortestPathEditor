@@ -3,12 +3,15 @@ import { RemoveNodeCommand } from "./commands/removeNodeCommand.js";
 import { AddEdgeCommand } from "./commands/addEdgeCommand.js";
 import { MoveNodeCommand } from "./commands/moveNodeCommand.js";
 import { RemoveEdgeCommand } from "./commands/removeEdgeCommand.js";
-
+import { SetValueCommand } from "./commands/setValueCommand.js";
+import { MultiCmdsCommand } from "./commands/multiCmdsCommand.js";
 
 export class GraphEditor {
+
     constructor(editor) {
         let thisGraph = this;
-        thisGraph.editor = editor;
+        thisGraph.editor = editor,
+            this.MODES = editor.MODES;
 
         thisGraph.editor.signals.graphDataChanged.add(() => {
             this.updateGraph();
@@ -21,10 +24,13 @@ export class GraphEditor {
 
         thisGraph.svg = svg;
 
+        thisGraph.gridDataX = d3.range(0, ((window.innerWidth / editor.state.grid.transform.k) / thisGraph.editor.state.grid.dimensions.x) + 1);
+        thisGraph.gridDataY = d3.range(0, ((window.innerHeight / editor.state.grid.transform.k) / thisGraph.editor.state.grid.dimensions.y) + 1);
+
         thisGraph.consts = {
-            selectedClass: "selected",
-            connectClass: "connect-node",
-            circleGClass: "conceptG",
+            selectedClass: "g-selected",
+            connectClass: "g-drop-node",
+            circleGClass: "g-node",
             graphClass: "graph",
             textClass: "id-text",
             nodeLabelClass: "node-label",
@@ -41,25 +47,6 @@ export class GraphEditor {
         thisGraph.defaults = {
             oneway: false,
         }
-
-        thisGraph.state = {
-            selectBrush: false,
-            selectedNode: null,
-            selectedNodes: [],
-            selectedEdges: [],
-            selectedEdge: null,
-            mouseDownNode: null,
-            mouseEnterNode: null,
-            mouseDownLink: null,
-            justDragged: false,
-            justScaleTransGraph: false,
-            lastKeyDown: -1,
-            keyDown: [],
-            shiftNodeDrag: false,
-            selectedText: null,
-            selectionBox: {},
-            mode: MODES.default,
-        };
 
         // define arrow markers for graph links
         let defs = svg.append('svg:defs');
@@ -96,6 +83,11 @@ export class GraphEditor {
             .attr('d', 'M10,-5L0,0L10,5');
 
         thisGraph.svg = svg;
+
+        thisGraph.svgGrid = svg.append("g")
+            .classed("grid", true);
+        let svgGrid = thisGraph.svgGrid;
+
         thisGraph.svgG = svg.append("g")
             .classed(thisGraph.consts.graphClass, true);
         let svgG = thisGraph.svgG;
@@ -111,7 +103,8 @@ export class GraphEditor {
             .attr('width', '0')
             .attr('height', '0');
 
-        thisGraph.grid = svgG.append("g").classed("grid", true).selectAll("g");
+        thisGraph.gridX = svgGrid.append("g").selectAll("g");
+        thisGraph.gridY = svgGrid.append("g").selectAll("g");
 
         // svg nodes and edges
         thisGraph.backgroundImage = svgG.append("g").selectAll("g");
@@ -126,12 +119,16 @@ export class GraphEditor {
             })
             .on("start", function (event, d) {
                 thisGraph.dragStartPos = { ...d };
+                // if (!thisGraph.editor.state.selected.includes(d)) {
+                //     thisGraph.replaceSelect(d3.select(this))
+                // }
             })
             .on("drag", function (event, d) {
                 thisGraph.editor.state.justDragged = true;
                 thisGraph.dragmove.call(thisGraph, event, d);
             })
             .on("end", function (event, d) {
+                d3.selectAll(".snap").classed("snap", false)
                 thisGraph.dragEndPos = { ...d };
                 if (thisGraph.editor.state.shiftNodeDrag) {
                     thisGraph.dragEnd.call(thisGraph, d3.select(this), event, thisGraph.editor.state.mouseEnterNode);
@@ -139,33 +136,35 @@ export class GraphEditor {
                     (thisGraph.dragStartPos.x !== thisGraph.dragEndPos.x) ||
                     (thisGraph.dragStartPos.y !== thisGraph.dragEndPos.y)
                 ) {
-                    // TODO: Update for multiple nodes moving
-                    if (!thisGraph.editor.state.selectedNodes.includes(d)) {
-                        thisGraph.replaceSelect(d3.select(this))
+                    if (thisGraph.editor.state.selected.length <= 1) {
+                        thisGraph.editor.execute(new MoveNodeCommand(thisGraph.editor, thisGraph.dragStartPos, thisGraph.dragEndPos));
                     }
-                    thisGraph.editor.execute(new MoveNodeCommand(thisGraph.editor, thisGraph.dragStartPos, thisGraph.dragEndPos));
+                    else if (thisGraph.editor.state.selected.length > 1) {
+                        let xDiff = thisGraph.dragStartPos.x - thisGraph.dragEndPos.x,
+                            yDiff = thisGraph.dragStartPos.y - thisGraph.dragEndPos.y,
+                            cmdStack = [];
+
+                        thisGraph.editor.state.selected.forEach(selectedObject => {
+                            if (selectedObject.x !== undefined && selectedObject.y !== undefined) {
+                                let start = { ...selectedObject };
+                                start.x += xDiff;
+                                start.y += yDiff;
+
+                                cmdStack.push(new MoveNodeCommand(thisGraph.editor, start, selectedObject))
+                            }
+
+                        });
+
+                        thisGraph.editor.execute(new MultiCmdsCommand(thisGraph.editor, cmdStack, 'Move Multiple Nodes'))
+                    }
                 }
 
             });
 
-        // listen for key events
-        d3.select(window)
-            .on("keydown", function (event) {
-                thisGraph.svgKeyDown.call(thisGraph, event);
-            })
-            .on("keyup", function (event) {
-                //console.log("keyup");
-                thisGraph.svgKeyUp.call(thisGraph, event);
-            });
-
-        svg.on("mousedown", function (event, d) {
-            thisGraph.svgMouseDown.call(thisGraph, event, d);
-            if (event.shiftKey) {
-                event.stopImmediatePropagation();
-            }
-        });
-        svg.on("mouseup", function (event, d) {
-            thisGraph.svgMouseUp.call(thisGraph, event, d);
+        svg.on("click", function (event, d) {
+            event.stopImmediatePropagation();
+            // thisGraph.svgMouseDown.call(thisGraph, event, d);
+            thisGraph.svgClick.call(thisGraph, event, d);
         });
 
         // listen for dragging
@@ -186,10 +185,10 @@ export class GraphEditor {
             })
             .on("start", function (event) {
                 if (!event.sourceEvent.shiftKey)
-                    d3.select('body').style("cursor", "grab");
+                    d3.select('svg').style("cursor", "grabbing");
             })
             .on("end", function () {
-                d3.select('body').style("cursor", "auto");
+                d3.select('svg').style("cursor", "");
             }).filter(function (e) {
                 return !e.altKey; //would like it to be ctrl but won't work
             });
@@ -240,80 +239,40 @@ export class GraphEditor {
 
         this.updateGraph()
 
-        document.addEventListener('keydown', (event) => {
-            var name = event.key;
-            var code = event.code;
-            // Alert the key name and key code on keydown
-            console.log(`Key pressed ${name} \r\n Key code value: ${code}`);
 
-
-            switch(name){
-                case 'Delete':
-                case 'Backspace':
-                    let selected = thisGraph.editor.state.selected;
-                    if (selected.length) {
-                        selected.forEach( // TODO: change to batch command
-                            function (selected) {
-                                if(selected.x && selected.y && !selected.target && !selected.source){
-                                    thisGraph.editor.execute(new RemoveNodeCommand(thisGraph.editor, selected)); 
-                                } else if (!selected.x && !selected.y && selected.target && selected.source){
-                                    thisGraph.editor.execute(new RemoveEdgeCommand(thisGraph.editor, selected)); 
-                                }
-                            }
-                        );
-        
-                        thisGraph.editor.state.selected = [];
-                        thisGraph.updateGraph();
-                    }
-                    break;
-                case 'Shift':
-                    thisGraph.editor.state.mode = MODES.create;
-                break;
-            }
-          }, false);
-
-          document.addEventListener('keyup', (event) => {
-            var name = event.key;
-            var code = event.code;
-            // Alert the key name and key code on keydown
-            console.log(`Key Up ${name} \r\n Key code value: ${code}`);
-
-
-            switch(name){
-                case 'Shift':
-                    thisGraph.editor.state.keyDown = [];
-                    thisGraph.editor.state.lastKeyDown = -1;
-                    thisGraph.editor.state.mode = MODES.default;
-                break;
-            }
-          }, false);
 
     }
     dragmove(event, d) {
         let thisGraph = this;
-        if (thisGraph.editor.state.shiftNodeDrag || event.sourceEvent.shiftKey) {
+
+        if (thisGraph.editor.state.shiftNodeDrag || thisGraph.editor.state.mode === thisGraph.MODES.create) {
             let xy = thisGraph.getXYCoordinates(event);
             thisGraph.dragLine.attr('d', 'M' + d.x + ',' + d.y + 'L' + xy.x + ',' + xy.y);
         } else {
-            if (thisGraph.editor.state.selectedNodes.length > 1 && thisGraph.editor.state.selectedNodes.includes(d)) {
-                // let xy = this.editor.snapToGrid(event.x, event.y);
+            if (thisGraph.editor.state.selected.length > 1 && thisGraph.editor.state.selected.includes(d)) {
+                let xy = this.editor.snapToGrid(event.x, event.y);
+                let x = d.x, y = d.y;
+
+                let diffX = xy.x - x;
+                let diffY = xy.y - y;
 
                 d3.selectAll("." + thisGraph.consts.selectedClass)
-                    .attr("x", (d) => d ? d.x += event.dx : null)
-                    .attr("y", (d) => d ? d.y += event.dy : null);
+                    .attr("x", (d) => d ? d.x += diffX : null)
+                    .attr("y", (d) => d ? d.y += diffY : null);
 
                 // TODO: snap to grid and command with all moves
             } else {
-                // d.x += event.dx;
-                // d.y += event.dy;
-
                 let xy = this.editor.snapToGrid(event.x, event.y);
                 d.x = xy.x;
                 d.y = xy.y;
+
+                console.log(xy.y + thisGraph.editor.state.grid.transform.y)
+                d3.selectAll(".snap").classed("snap", false)
+                d3.select("#x" + xy.x).classed("snap", true)
+                d3.select("#y" + xy.y + thisGraph.editor.state.grid.transform.y).classed("snap", true)
             }
             // thisGraph.updateGraph();
             this.editor.signals.graphDataChanged.dispatch();
-            this.editor.signals.nodeDataChanged.dispatch(d);
         }
     }
     dragEnd(d3node, event, d) {
@@ -347,93 +306,7 @@ export class GraphEditor {
         state.mouseEnterNode = null;
         return;
     }
-    // keydown on main svg
-    svgKeyDown(event) {
-        let thisGraph = this,
-            state = thisGraph.editor.state,
-            consts = thisGraph.consts,
-            keyCode = event.keyCode;
 
-
-        //TODO: create a class for this!
-        var includes = function (what) {
-            let array = state.keyDown
-            return array.includes(what);
-        },
-            just = function (what) {
-                let array = state.keyDown
-                return array.includes(what) && array.length === 1;
-            };
-
-        // make sure repeated key presses don't register for each keydown
-        // if (state.lastKeyDown !== -1) return;
-        if (state.keyDown.includes(keyCode)) return;
-
-        state.lastKeyDown = keyCode;
-
-        state.keyDown.push(keyCode);
-        // console.log(state.keyDown.toString());
-
-        let selectedNodes = state.selectedNodes,
-            selectedEdges = state.selectedEdges,
-            selected = state.selected;
-        // console.log(state.keyDown, [consts.BACKSPACE_KEY]);
-
-        if (just(consts.DELETE_KEY) || just(consts.BACKSPACE_KEY)) {
-            event.preventDefault();
-
-            //TODO: Split by nodes and edges
-
-            // if (selectedNodes.length) {
-            //     selectedNodes.forEach( // TODO: change to batch command
-            //         (selectedNode) => thisGraph.editor.execute(new RemoveNodeCommand(thisGraph.editor, selectedNode))
-            //     );
-
-            //     state.selectedNode = null;
-            //     state.selectedNodes = [];
-            //     thisGraph.updateGraph();
-            // } else if (selectedEdges.length) {
-            //     selectedEdges.forEach(
-            //         (selectedEdge) => thisGraph.editor.graph.removeEdge(selectedEdge)
-            //     );
-
-            //     state.selectedEdge = null;
-            //     state.selectedEdges = [];
-            //     thisGraph.updateGraph();
-            // } else if (selected.length) {
-            //     selected.forEach( // TODO: change to batch command
-            //         function (selected) {
-            //             if(selected.x && selected.y && !selected.target && !selected.source){
-            //                 thisGraph.editor.execute(new RemoveNodeCommand(thisGraph.editor, selected)); 
-            //             } else if (!selected.x && !selected.y && selected.target && selected.source){
-            //                 thisGraph.editor.execute(new RemoveEdgeCommand(thisGraph.editor, selected)); 
-            //             }
-            //         }
-            //     );
-
-            //     state.selected = [];
-            //     thisGraph.updateGraph();
-            // }
-        } else if (just(consts.SHIFT_KEY)) {
-            state.mode = MODES.create;
-        } else if (includes(consts.CTRL_KEY) && includes(65)) {
-            thisGraph.select(d3.selectAll("." + consts.circleGClass + ", .link")); //
-        } else if (just(consts.CTRL_KEY)) {
-            // thisGraph.svg.append('g')
-            //     .attr('class', 'brush')
-            //     .call(thisGraph.brush);
-        }
-    }
-    svgKeyUp() {
-        this.editor.state.keyDown = [];
-        this.editor.state.lastKeyDown = -1;
-        this.editor.state.mode = MODES.default;
-    }
-    // mousedown on main svg
-    svgMouseDown() {
-        let thisGraph = this;
-        thisGraph.editor.state.graphMouseDown = true;
-    }
     getXYCoordinates(event) {
         let thisGraph = this,
             pt = thisGraph.svg.node().createSVGPoint(),
@@ -443,20 +316,21 @@ export class GraphEditor {
         return pt;
     }
     // mouseup on main svg
-    svgMouseUp(event) {
+    svgClick(event) {
         let thisGraph = this,
             state = thisGraph.editor.state;
         if (state.justScaleTransGraph) {
             // dragged not clicked
             state.justScaleTransGraph = false;
-        } else if (state.graphMouseDown && state.mode === MODES.create) {
+        } else if (/* state.graphMouseDown && */ state.mode === thisGraph.MODES.create) {
             let xy = thisGraph.getXYCoordinates(event);
             xy = this.editor.snapToGrid(xy.x, xy.y);
             thisGraph.editor.execute(new AddNodeCommand(thisGraph.editor, { x: xy.x, y: xy.y }));
 
-        } else if (state.graphMouseDown && state.mode === MODES.create && event.ctrlKey) {
+        } else if (/* state.graphMouseDown && */ state.mode === thisGraph.MODES.create && event.ctrlKey) {
             //get selected node
-            let selected = thisGraph.editor.state.selectedNodes;
+            // TODO: make this work i suppose?
+            let selected = thisGraph.editor.state.selected;
             let xy = thisGraph.getXYCoordinates(event);
             let newNode = thisGraph.editor.graph.createNode(xy.x, xy.y);
 
@@ -465,11 +339,9 @@ export class GraphEditor {
                 thisGraph.editor.graph.createEdge(newNode, prevNode, thisGraph.defaults.oneway);
             };
 
-
-
             //create edge to newly created node
             // select new node
-            thisGraph.removeSelectFromAllNodes();
+            thisGraph.removeSelectFromAll();
             thisGraph.updateGraph();
             thisGraph.selectById(newNode.id);
             // thisGraph.updateGraph();
@@ -478,34 +350,28 @@ export class GraphEditor {
             state.shiftNodeDrag = false;
             thisGraph.dragLine.classed("hidden", true);
         } else {
-            //console.log("click Click Click!!!");
+            thisGraph.removeSelectFromAll();
         }
         state.graphMouseDown = false;
     }
-    pathMouseDown(d3path, event, d) {
+    pathMouseDown(d3Object, event, d) {
         let thisGraph = this,
             state = thisGraph.editor.state;
         event.stopPropagation();
         state.mouseDownLink = d;
 
-        //TODO: FIX! filter for just edges...
-
-        // if (state.selected.includes(d)) {
-        //     thisGraph.removeSelectFromAll();
-        // }
-
         if (event.ctrlKey) {
             if (state.selected.includes(d)) {
-                thisGraph.removeSelect(d3path);
+                thisGraph.removeSelect(d3Object);
             } else {
-                thisGraph.select(d3path);
+                thisGraph.select(d3Object);
             }
 
         } else {
             if (state.selected.includes(d)) {
-                thisGraph.removeSelect(d3path);
+                thisGraph.removeSelect(d3Object);
             } else {
-                thisGraph.replaceSelect(d3path);
+                thisGraph.replaceSelect(d3Object);
             }
         }
 
@@ -516,9 +382,8 @@ export class GraphEditor {
             state = thisGraph.editor.state;
         event.stopPropagation();
         state.mouseDownNode = d;
-        // console.log(`mousedownnode = ${JSON.stringify(d)}`);
-        if (event.shiftKey) {
-            state.shiftNodeDrag = event.shiftKey;
+        if (state.mode === thisGraph.MODES.create) {
+            state.shiftNodeDrag = state.mode === thisGraph.MODES.create;
             // reposition dragged directed edge
             thisGraph.dragLine.classed('hidden', false)
                 .attr('d', 'M' + d.x + ',' + d.y + 'L' + d.x + ',' + d.y);
@@ -526,31 +391,36 @@ export class GraphEditor {
         }
     }
     // mouseup on nodes
-    circleMouseUp(d3node, event, d) {
+    circleMouseUp(d3Object, event, d) {
         let thisGraph = this,
             state = thisGraph.editor.state,
             consts = thisGraph.consts;
         // reset the states
         state.shiftNodeDrag = false;
-        d3node.classed(consts.connectClass, false);
+        d3Object.classed(consts.connectClass, false);
 
-        if (state.selectedEdge) { thisGraph.removeSelectFromAll(); }
-        if (!state.selectedNodes.includes(d)) {
-            if (event.ctrlKey) {
-                thisGraph.select(d3node);
+        if (event.ctrlKey) {
+            if (state.selected.includes(d)) {
+                thisGraph.removeSelect(d3Object);
             } else {
-                thisGraph.replaceSelect(d3node);
+                thisGraph.select(d3Object);
             }
+
         } else {
-            if (state.selectedNodes.length > 1 && !event.ctrlKey) {
-                thisGraph.replaceSelect(d3node);
+            if (state.selected.includes(d)) {
+                if(state.selected.length ===1){
+                    thisGraph.removeSelect(d3Object);
+                } else {
+                    thisGraph.replaceSelect(d3Object);
+                }
             } else {
-                thisGraph.removeSelect(d3node);
+                thisGraph.replaceSelect(d3Object);
             }
-
         }
 
     }
+
+    /////////////////////
 
     select(d3Object) {
 
@@ -624,6 +494,41 @@ export class GraphEditor {
 
     }
 
+    deleteSelected() {
+        let thisGraph = this,
+            selected = thisGraph.editor.state.selected;
+
+        if (selected.length) {
+            if (selected.length > 1) {
+                let cmdStackNode = [],
+                    cmdStackEdge = [];
+                selected.forEach(
+                    function (select) {
+                        if (select.x && select.y && !select.target && !select.source) {
+                            cmdStackNode.push(new RemoveNodeCommand(thisGraph.editor, select));
+                            //TODO: And any edges that will be removed because of this command
+                        } else if (!select.x && !select.y && select.target && select.source) {
+                            cmdStackEdge.push(new RemoveEdgeCommand(thisGraph.editor, select));
+                        }
+                    }
+                );
+
+                thisGraph.editor.execute(new MultiCmdsCommand(thisGraph.editor, [...cmdStackEdge, ...cmdStackNode], 'Delete Multiple Nodes'))
+
+            } else if (selected.length === 1) {
+                let select = selected[0];
+                if (select.x !== undefined && select.y !== undefined && select.target === undefined && select.source === undefined) {
+                    thisGraph.editor.execute(new RemoveNodeCommand(thisGraph.editor, select));
+                } else if (select.x === undefined && select.y === undefined && select.target !== undefined && select.source !== undefined) {
+                    thisGraph.editor.execute(new RemoveEdgeCommand(thisGraph.editor, select));
+                }
+            }
+
+            thisGraph.editor.state.selected = [];
+            thisGraph.updateGraph();
+        }
+    }
+
     deleteGraph(skipPrompt) {
         let thisGraph = this,
             doDelete = true;
@@ -635,6 +540,8 @@ export class GraphEditor {
             thisGraph.updateGraph();
         }
     }
+
+    //////////////////////////////////////////
 
     shortestPath() {
 
@@ -655,6 +562,7 @@ export class GraphEditor {
         // thisGraph.updateGraph();
 
     }
+
     align(dimension = 'x', mode = 3) {
 
         //0: left/top, 1:middle, 2:right/bottom
@@ -719,34 +627,54 @@ export class GraphEditor {
     updateGraph() {
         let thisGraph = this,
             consts = thisGraph.consts,
-            state = thisGraph.editor.state;
-        // let arr = d3.range(0, 100);
-        // let  arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99];
+            state = thisGraph.editor.state,
+            showGrid = editor.state.grid.active && thisGraph.gridDataX.length <= window.innerWidth * editor.state.grid.threshold;
 
+        // /** Grid */ TODO: Centre on a node etc
+        thisGraph.gridX = thisGraph.gridX.data(showGrid ? thisGraph.gridDataX : []);
+        let gridX = thisGraph.gridX;
+
+        gridX.attr("d", function (d) {
+            return "M" + d * editor.state.grid.dimensions.x + "," + (-editor.state.grid.dimensions.x) + "L" + d * editor.state.grid.dimensions.x + "," + ((window.innerHeight / editor.state.grid.transform.k) + editor.state.grid.dimensions.x);
+        })
+
+        gridX.exit().remove();
+
+        gridX = gridX.enter().append("path")
+            // .attr("id", d => "x" + d * editor.state.grid.dimensions.x)
+            .classed("line", true)
+            .attr("d", function (d) {
+                return "M" + d * editor.state.grid.dimensions.x + "," + (-editor.state.grid.dimensions.x) + "L" + d * editor.state.grid.dimensions.x + "," + ((window.innerHeight / editor.state.grid.transform.k) + editor.state.grid.dimensions.x);
+            }).merge(gridX)
+
+        thisGraph.gridX = gridX;
 
         // /** Grid */
-        // thisGraph.grid = thisGraph.grid.data(arr);
-        // let grid = thisGraph.grid;
-        // // update existing grid
-        // // remove old links
-        // grid.exit().remove();
+        thisGraph.gridY = thisGraph.gridY.data(showGrid ? thisGraph.gridDataY : []);
+        let gridY = thisGraph.gridY;
 
-        // // add new grid
-        // // grid = grid.enter();
+        gridY
+            // .attr("id", d => "y" + ((d * editor.state.grid.dimensions.y) + editor.state.grid.transform.y))
+            .attr("d", function (d) {
+                return "M" + (-editor.state.grid.dimensions.y) + ","
+                    + d * editor.state.grid.dimensions.y
+                    + "L" + ((window.innerWidth / editor.state.grid.transform.k) + editor.state.grid.dimensions.y)
+                    + "," + d * editor.state.grid.dimensions.y;
+            })
 
-        // grid.enter().append("path")
-        //     .attr("d", function (d) {
-        //         return "M" + d * editor.state.grid.dimensions.x + "," + 0 + "L" + d * editor.state.grid.dimensions.x + "," + window.innerWidth;
-        //     })
-        //     .merge(grid)
-        // // add new grid
-        // // grid.append("path")
-        // //     .attr("d", function (d) {
-        // //         return "M" + 0 + "," + d * editor.state.grid.dimensions.y + "L" + window.innerHeight + "," + d * editor.state.grid.dimensions.y;
-        // //     })
-        // //     .merge(grid)
+        gridY.exit().remove();
 
-        // thisGraph.grid = grid;
+        gridY = gridY.enter().append("path")
+            .classed("line", true)
+            // .attr("id", d => "y" + ((d * editor.state.grid.dimensions.y) + editor.state.grid.transform.y))
+            .attr("d", function (d) {
+                return "M" + (-editor.state.grid.dimensions.y) + ","
+                    + d * editor.state.grid.dimensions.y
+                    + "L" + ((window.innerWidth / editor.state.grid.transform.k) + editor.state.grid.dimensions.y)
+                    + "," + d * editor.state.grid.dimensions.y;
+            }).merge(gridY)
+
+        thisGraph.gridY = gridY;
 
         ////////
 
@@ -800,17 +728,14 @@ export class GraphEditor {
             .append("path")
             .style('marker-end', 'url(#end-arrow)')
             .style('marker-start', function (d) { return !d.oneway ? 'url(#start-arrow)' : ''; })
-            .classed("link", true)
-            .attr("id", function (d) { return "id" + d.source.id + "-" + d.target.id })
+            .classed("edge", true)
+            .attr("id", function (d) { return d.source.id + "<>" + d.target.id })
             .attr("d", function (d) {
                 return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y;
             })
             .merge(paths)
-            .on("mouseup", function (d) {
-                console.log('mouseup link');
-                state.mouseDownLink = null;
-            })
-            .on("mousedown", function (event, d) {
+            .on("click", function (event, d) {
+                event.stopImmediatePropagation();
                 thisGraph.pathMouseDown.call(thisGraph, d3.select(this), event, d);
             })
 
@@ -900,7 +825,6 @@ export class GraphEditor {
             return "translate(" + d.x + "," + d.y + ")";
         });
 
-
         // add new nodes
         let newNodes = thisGraph.circles.enter()
             .append("g").merge(thisGraph.circles);
@@ -909,7 +833,7 @@ export class GraphEditor {
             .attr("transform", function (d) {
                 return "translate(" + d.x + "," + d.y + ")";
             })
-            .attr("id", function (d) { return "id" + d.id })
+            .attr("id", function (d) { return d.id })
             .on("mouseover", function (event, d) {
                 state.mouseEnterNode = d;
                 if (state.shiftNodeDrag) {
@@ -924,6 +848,7 @@ export class GraphEditor {
                 thisGraph.circleMouseDown.call(thisGraph, d3.select(this), event, d);
             })
             .on("click", function (event, d) {
+                event.stopImmediatePropagation();
                 thisGraph.circleMouseUp.call(thisGraph, d3.select(this), event, d);
             })
             .call(thisGraph.drag);
@@ -946,16 +871,16 @@ export class GraphEditor {
             return String(d.id);
         });
         let nodeLabels = thisGraph.nodeLabels;
-        // update existing paths
+        // update existing 
         nodeLabels
             .attr("x", (d) => d.x)
             .attr("y", (d) => d.y)
             .text((d) => d[thisGraph.editor.config.getKey('settings/nodetext')])
 
-        // remove old links
+        // remove old
         nodeLabels.exit().remove();
 
-        // add new paths
+        // add new 
         nodeLabels = nodeLabels.enter()
             .append("text")
             .attr("x", (d) => d.x)
@@ -969,17 +894,34 @@ export class GraphEditor {
 
         ///////////////////////////////////////////
 
-        // thisGraph.updateSidebar();
-
     }
     zoomed(event) {
+
         this.editor.state.justScaleTransGraph = true;
+        // d3.select( "." + this.consts.graphClass)
+        //     .attr("transform", event.transform);
+
         d3.select("." + this.consts.graphClass)
             .attr("transform", event.transform);
+
+        editor.state.grid.transform = event.transform;
+
+        d3.select(".grid").attr("transform",
+            "translate(" + event.transform.x % (this.editor.state.grid.dimensions.x * event.transform.k)
+            + "," + event.transform.y % (this.editor.state.grid.dimensions.y * event.transform.k)
+            + ")scale(" + event.transform.k + ")");
+
+        this.gridDataX = d3.range(0, ((window.innerWidth / event.transform.k) / this.editor.state.grid.dimensions.x) + 1);
+        this.gridDataY = d3.range(0, ((window.innerHeight / event.transform.k) / this.editor.state.grid.dimensions.y) + 1);
+
+        this.updateGraph();
+        // calculate new grid
+
     }
     updateWindow(svg) {
         let docEl = document.documentElement,
             bodyEl = document.getElementsByTagName('body')[0];
+
         let x = window.innerWidth || docEl.clientWidth || bodyEl.clientWidth;
         let y = window.innerHeight || docEl.clientHeight || bodyEl.clientHeight;
         svg.attr("width", x).attr("height", y);
@@ -987,8 +929,3 @@ export class GraphEditor {
 
 }
 
-const MODES = {
-    default: "default",
-    create: "create",
-    edit: "edit",
-}

@@ -2,7 +2,7 @@ import { Command } from '../Command.js';
 
 /**
  * @param editor Editor
- * @param edge An Edge
+ * @param edge A Edge
  * @constructor
  */
 class RemoveEdgeCommand extends Command {
@@ -11,25 +11,32 @@ class RemoveEdgeCommand extends Command {
 
         super(editor);
 
-        this.type = 'RemoveEdgeCommand';
+        this.type = 'AddEdgeCommand';
 
         this.edge = edge;
+
         if (edge !== undefined) {
-            this.name = `Remove Edge: ${undefined}`;
+
+            this.name = `Remove Edge: ${edge.source.title} - ${edge.target.title}`;
+
         }
 
     }
 
     execute() {
+
         // Remove Node Code
         this.editor.removeEdge(this.edge);
-        //this.editor.deselect();
+         //this.editor.deselect();
+
     }
 
     undo() {
+
         // Add Node Code
         this.editor.addEdge(this.edge);
         // this.editor.select( this.node );
+
     }
 
     // toJSON() {

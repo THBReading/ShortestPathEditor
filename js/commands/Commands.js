@@ -4,4 +4,4 @@ export { AddEdgeCommand } from './addEdgeCommand.js';
 export { RemoveEdgeCommand } from './removeEdgeCommand.js';
 export { MoveNodeCommand } from './moveNodeCommand.js';
 export { SetValueCommand } from './setValueCommand.js';
-export { MultiCmdsCommand } from './MultiCmdsCommand.js';
+export { MultiCmdsCommand } from './multiCmdsCommand.js';

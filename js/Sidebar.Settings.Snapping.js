@@ -6,6 +6,7 @@ function SidebarSettingsSnapping(editor) {
     var signals = editor.signals;
 
     var container = new UIPanel();
+    container.setId( 'grid' );
 
     var titleRow = new UIRow();
 
@@ -14,6 +15,7 @@ function SidebarSettingsSnapping(editor) {
     persistent.setPosition('absolute').setRight("8px");
     persistent.onChange(function() {
         editor.state.grid.active = this.getValue();
+        editor.signals.graphDataChanged.dispatch();
     });
 
     titleRow.add(new UIText('SNAPPING GRID'), persistent);
@@ -29,10 +31,12 @@ function SidebarSettingsSnapping(editor) {
     var centrePositionX = new UIInteger().setWidth('40px').onChange(function() {
         editor.state.grid.centre.x = centrePositionX.getValue();
         editor.signals.snapGridChanged.dispatch();
+        editor.signals.graphDataChanged.dispatch();
     });
     var centrePositionY = new UIInteger().setWidth('40px').onChange(function() {
         editor.state.grid.centre.y = centrePositionY.getValue();
         editor.signals.snapGridChanged.dispatch();
+        editor.signals.graphDataChanged.dispatch();
     });
     var centreOn = new UIButton("New").setMarginLeft('7px').onClick(function() {
 
@@ -50,10 +54,12 @@ function SidebarSettingsSnapping(editor) {
     var dimensionsWidth = new UIInteger().setWidth('40px').onChange(function() {
         editor.state.grid.dimensions.x = dimensionsWidth.getValue();
         editor.signals.snapGridChanged.dispatch();
+        editor.signals.graphDataChanged.dispatch();
     });
     var dimensionsHeight = new UIInteger().setWidth('40px').onChange(function() {
         editor.state.grid.dimensions.y = dimensionsHeight.getValue();
         editor.signals.snapGridChanged.dispatch();
+        editor.signals.graphDataChanged.dispatch();
     });
 
 
