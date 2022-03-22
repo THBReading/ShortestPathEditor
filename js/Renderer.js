@@ -266,10 +266,11 @@ export class GraphEditor {
                 d.x = xy.x;
                 d.y = xy.y;
 
-                console.log(xy.y + thisGraph.editor.state.grid.transform.y)
-                d3.selectAll(".snap").classed("snap", false)
-                d3.select("#x" + xy.x).classed("snap", true)
-                d3.select("#y" + xy.y + thisGraph.editor.state.grid.transform.y).classed("snap", true)
+
+                // console.log(xy.y + thisGraph.editor.state.grid.transform.y)
+                // d3.selectAll(".snap").classed("snap", false)
+                // d3.select("#x" + xy.x).classed("snap", true)
+                // d3.select("#y" + xy.y + thisGraph.editor.state.grid.transform.y).classed("snap", true)
             }
             // thisGraph.updateGraph();
             this.editor.signals.graphDataChanged.dispatch();

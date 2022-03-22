@@ -22,6 +22,15 @@ function MenubarTitle( editor ) {
 		editor.config.setKey('project/title',title.getValue())
 	})
 
+	title.dom.addEventListener('keydown', function(event){
+		var name = event.key.toLowerCase();
+		if ( name === "enter"){
+			title.dom.blur();
+		}
+	})
+
+	
+
 	container.add( title );
 
 	editor.signals.savingStarted.add( function () {

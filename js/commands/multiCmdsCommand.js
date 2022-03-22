@@ -7,8 +7,6 @@ import { Command } from '../Command.js';
  */
 class MultiCmdsCommand extends Command {
 
-    //A change to force update and another
-
 	constructor(editor, cmdArray, name = 'Multiple Changes') {
 
 		super(editor);

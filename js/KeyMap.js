@@ -22,15 +22,13 @@ function KeyMap(editor, graphEditor, sidebar) {
                 sidebar.select('info');
                 break;
             case 's':
-                sidebar.select('settings');
-                break;
-
-
-            case 's':
                 if (event.ctrlKey) {
                     event.preventDefault();
+                } else {
+                    sidebar.select('settings');
                 }
                 break;
+
             case 'z':
                 if (event.ctrlKey) {
                     editor.undo();
